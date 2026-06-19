@@ -14,6 +14,8 @@ test("GitHub Pages deployment uses the canonical project URL and static build co
   const workflow = readFileSync(workflowPath, "utf8");
   assert.match(workflow, /pages:\s*write/);
   assert.match(workflow, /id-token:\s*write/);
+  assert.match(workflow, /uses:\s*pnpm\/action-setup@v4/);
+  assert.doesNotMatch(workflow, /version:\s*10\.4\.1/);
   assert.match(workflow, /pnpm run build:pages/);
   assert.match(workflow, /path:\s*\.\/dist\/public/);
   assert.match(workflow, /url:\s*https:\/\/moose-lab\.github\.io\/sports-ai-hub\//);
