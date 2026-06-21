@@ -55,8 +55,11 @@
   --signal-green-dim: #00CC6A;
   --amber-alert: #F59E0B;
   --canvas: #0D0F14;
-  --canvas-raised: #141720;
+  --canvas-raised: #0F1118;
+  --canvas-elevated: #141720;
   --canvas-card: #1A1E2A;
+  --canvas-terminal: #0A0C10;
+  --canvas-inset: #1F2433;
   --canvas-border: rgba(255,255,255,0.08);
 }
 
@@ -94,6 +97,74 @@
   --sidebar-accent-foreground: #F0F2F5;
   --sidebar-border: rgba(255,255,255,0.06);
   --sidebar-ring: #00FF87;
+
+  /* ============================================================
+     Signal & Pitch tokens — full set the landing page references.
+     Defined on :root so var(--token) resolves in inline styles.
+     ============================================================ */
+
+  /* Brand base */
+  --signal-green: #00FF87;
+  --signal-green-dim: #00CC6A;
+  --amber-alert: #F59E0B;
+
+  /* Surfaces */
+  --canvas: #0D0F14;
+  --canvas-raised: #0F1118;
+  --canvas-elevated: #141720;
+  --canvas-card: #1A1E2A;
+  --canvas-terminal: #0A0C10;
+  --canvas-inset: #1F2433;
+
+  /* Text ramp */
+  --fg-1: #F0F2F5;
+  --fg-2: #A0A8B8;
+  --fg-3: #6B7280;
+  --fg-4: #4B5563;
+
+  /* Lines */
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --input-bg: rgba(255, 255, 255, 0.06);
+
+  /* Signal / amber alpha tints */
+  --green-a05: rgba(0, 255, 135, 0.05);
+  --green-a10: rgba(0, 255, 135, 0.10);
+  --green-a12: rgba(0, 255, 135, 0.12);
+  --green-a20: rgba(0, 255, 135, 0.20);
+  --green-a30: rgba(0, 255, 135, 0.30);
+  --green-a40: rgba(0, 255, 135, 0.40);
+  --amber-a10: rgba(245, 158, 11, 0.10);
+  --amber-a25: rgba(245, 158, 11, 0.25);
+
+  /* Type families */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Letter spacing */
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.08em;
+  --tracking-widest: 0.18em;
+
+  /* Container */
+  --container-max: 1280px;
+  --container-pad: 24px;
+
+  /* Radii */
+  --radius-pill: 9999px;
+  --radius-xl: 12px;
+
+  /* Motion */
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+  --stagger: 80ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Signature signal-green glows */
+  --glow-signal: 0 0 20px rgba(0, 255, 135, 0.25), 0 0 40px rgba(0, 255, 135, 0.10);
+  --glow-signal-soft: 0 0 24px rgba(0, 255, 135, 0.12), 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glow-text: 0 0 20px rgba(0, 255, 135, 0.5);
 }
 
 @layer base {
@@ -147,6 +218,25 @@
 
   @media (min-width: 1024px) {
     .container { padding-left: 3rem; padding-right: 3rem; }
+  }
+
+  /* Signal & Pitch content container (1280px / 24px → 48px) */
+  .sa-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--container-pad);
+  }
+  @media (min-width: 1024px) {
+    .sa-container { padding-inline: 48px; }
+  }
+
+  /* Nav + footer links turn signal-green on hover */
+  .nav-link {
+    transition: color var(--dur-base) ease;
+  }
+  .nav-link:hover {
+    color: var(--signal-green);
   }
 
   /* Signal green glow utility */
