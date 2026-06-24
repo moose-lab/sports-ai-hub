@@ -6,9 +6,38 @@
  */
 
 import * as React from "react";
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { flagIso, flagSrc } from "@/lib/flags";
 import { readableOn, type WcFixture, type WcTeam } from "@/lib/worldcup";
+
+/* ── Country flag (falls back to the team color block if unmapped) ── */
+export function Flag({ team, w = 17, h = 12 }: { team: WcTeam; w?: number; h?: number }) {
+  const iso = flagIso(team);
+  const [failed, setFailed] = useState(false);
+  const base: React.CSSProperties = {
+    width: w,
+    height: h,
+    borderRadius: 3,
+    flex: "none",
+    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)",
+    display: "inline-block",
+    objectFit: "cover",
+  };
+  if (!iso || failed) return <span style={{ ...base, background: team.color }} aria-hidden />;
+  return (
+    <img
+      src={flagSrc(iso)}
+      alt={`${team.name} flag`}
+      width={w}
+      height={h}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      style={base}
+    />
+  );
+}
 
 /* ── Team crest ─────────────────────────────────────────────── */
 export function Crest({ team, size = 44 }: { team: WcTeam; size?: number }) {
@@ -77,9 +106,6 @@ export function StatusPill({ m }: { m: WcFixture }) {
 export function MatchChip({ m }: { m: WcFixture }) {
   const hasScore = (m.status === "final" || m.status === "live") && m.home.score != null;
   const inplay = m.status === "live";
-  const dot = (color: string) => (
-    <span style={{ width: 12, height: 12, borderRadius: 3, background: color, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)" }} />
-  );
   const code = (text: string) => (
     <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: "var(--fg-1)" }}>{text}</span>
   );
@@ -97,13 +123,13 @@ export function MatchChip({ m }: { m: WcFixture }) {
         background: "var(--amber-a10)",
       }}
     >
-      {dot(m.home.color)}
+      <Flag team={m.home} />
       {code(m.home.code)}
       <span style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 13.5, color: "var(--amber-alert)" }}>
         {hasScore ? `${m.home.score}-${m.away.score}` : <span style={{ color: "var(--fg-3)" }}>v</span>}
       </span>
       {code(m.away.code)}
-      {dot(m.away.color)}
+      <Flag team={m.away} />
       <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: inplay ? "var(--amber-alert)" : "var(--fg-3)", letterSpacing: "0.04em" }}>
         {tail}
       </span>
