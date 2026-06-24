@@ -1,19 +1,17 @@
 /**
  * Sports AI Hub — World Cup shared primitives.
- * The lightweight pieces the landing page needs (Crest, StatusPill, MatchChip)
- * plus the amber TodayBar — the ONE World Cup element on the landing hero.
- *
- * Daily-sync framing: amber accent, NO "LIVE" wording, no second-by-second
- * ticking. An in-progress match shows its snapshot minute (e.g. IN PLAY · 67').
+ * Crest, StatusPill, MatchChip and the amber TodayBar (the one World Cup
+ * element on the landing). All driven by the live `awesome-sports-ai` feed:
+ * scheduled fixtures show their kickoff time, finished fixtures show the score.
  */
 
 import * as React from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
-import { readableOn, wcFeed, type Match } from "@/pages/wc-data";
+import { readableOn, type WcFixture, type WcTeam } from "@/lib/worldcup";
 
 /* ── Team crest ─────────────────────────────────────────────── */
-export function Crest({ team, size = 44 }: { team: Match["home"]; size?: number }) {
+export function Crest({ team, size = 44 }: { team: WcTeam; size?: number }) {
   return (
     <div
       style={{
@@ -37,10 +35,10 @@ export function Crest({ team, size = 44 }: { team: Match["home"]; size?: number 
   );
 }
 
-/* ── Status pill — World Cup amber, NO "LIVE" wording ───────── */
-export function StatusPill({ m }: { m: Match }) {
+/* ── Status pill — amber, NO "LIVE" wording (daily-sync framing) ── */
+export function StatusPill({ m }: { m: WcFixture }) {
   const inplay = m.status === "live";
-  const ft = m.status === "ft";
+  const ft = m.status === "final";
   return (
     <span
       style={{
@@ -54,11 +52,7 @@ export function StatusPill({ m }: { m: Match }) {
         fontWeight: 700,
         letterSpacing: "0.08em",
         textTransform: "uppercase",
-        background: inplay
-          ? "var(--amber-a10)"
-          : ft
-            ? "rgba(255,255,255,0.05)"
-            : "rgba(255,255,255,0.04)",
+        background: inplay ? "var(--amber-a10)" : ft ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.04)",
         color: inplay ? "var(--amber-alert)" : ft ? "var(--fg-3)" : "var(--fg-2)",
         border: "1px solid " + (inplay ? "var(--amber-a25)" : "var(--border)"),
       }}
@@ -74,31 +68,22 @@ export function StatusPill({ m }: { m: Match }) {
           }}
         />
       )}
-      {inplay ? `IN PLAY · ${m.minute}'` : ft ? "FULL TIME" : `KO ${m.kickoff}`}
+      {inplay ? "IN PLAY" : ft ? "FULL TIME" : `KO ${m.kickoff ?? m.date}`}
     </span>
   );
 }
 
 /* ── Compact match chip for the Today bar ───────────────────── */
-export function MatchChip({ m }: { m: Match }) {
-  const hasScore = m.status === "live" || m.status === "ft";
+export function MatchChip({ m }: { m: WcFixture }) {
+  const hasScore = (m.status === "final" || m.status === "live") && m.home.score != null;
   const inplay = m.status === "live";
   const dot = (color: string) => (
-    <span
-      style={{
-        width: 12,
-        height: 12,
-        borderRadius: 3,
-        background: color,
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)",
-      }}
-    />
+    <span style={{ width: 12, height: 12, borderRadius: 3, background: color, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.18)" }} />
   );
   const code = (text: string) => (
-    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: "var(--fg-1)" }}>
-      {text}
-    </span>
+    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: "var(--fg-1)" }}>{text}</span>
   );
+  const tail = inplay ? "LIVE" : m.status === "final" ? "FT" : m.kickoff ?? m.date;
   return (
     <span
       style={{
@@ -119,24 +104,17 @@ export function MatchChip({ m }: { m: Match }) {
       </span>
       {code(m.away.code)}
       {dot(m.away.color)}
-      <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 10.5,
-          color: inplay ? "var(--amber-alert)" : "var(--fg-3)",
-          letterSpacing: "0.04em",
-        }}
-      >
-        {inplay ? `${m.minute}'` : m.status === "ft" ? "FT" : m.kickoff}
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: inplay ? "var(--amber-alert)" : "var(--fg-3)", letterSpacing: "0.04em" }}>
+        {tail}
       </span>
     </span>
   );
 }
 
-/* ── TodayBar — the amber hero strip ────────────────────────────
+/* ── TodayBar — amber hero strip carouseling today's fixtures ────
    `variant="home"`   → the whole bar links to the Match Center route.
    `variant="center"` → the bar scrolls to the #today fixtures section.
-   Marquee content is duplicated for a seamless `ticker-content` loop. ── */
+   `matches` comes from the live feed; while loading it shows a sync hint. ── */
 const barStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "stretch",
@@ -146,8 +124,10 @@ const barStyle: React.CSSProperties = {
   borderBottom: "1px solid var(--amber-a25)",
 };
 
-function TodayBarInner() {
-  const chips = (k: string) => wcFeed.matches.map((m, i) => <MatchChip key={k + i} m={m} />);
+function TodayBarInner({ matches }: { matches: WcFixture[] }) {
+  const hasMatches = matches.length > 0;
+  // Duplicate for a seamless marquee loop only when there's something to scroll.
+  const chips = (k: string) => matches.map((m, i) => <MatchChip key={k + i} m={m} />);
   return (
     <>
       <span
@@ -169,14 +149,20 @@ function TodayBarInner() {
         WORLD CUP
       </span>
       <span style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", position: "relative" }}>
-        <span
-          className="ticker-content"
-          style={{ display: "inline-flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", paddingLeft: 12 }}
-        >
-          {chips("a")}
-          <span style={{ width: 12 }} />
-          {chips("b")}
-        </span>
+        {hasMatches ? (
+          <span
+            className="ticker-content"
+            style={{ display: "inline-flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", paddingLeft: 12 }}
+          >
+            {chips("a")}
+            <span style={{ width: 12 }} />
+            {chips("b")}
+          </span>
+        ) : (
+          <span style={{ paddingLeft: 14, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-3)" }}>
+            Syncing today’s fixtures…
+          </span>
+        )}
         <span
           style={{
             position: "absolute",
@@ -209,7 +195,7 @@ function TodayBarInner() {
   );
 }
 
-export function TodayBar({ variant }: { variant: "home" | "center" }) {
+export function TodayBar({ matches = [], variant }: { matches?: WcFixture[]; variant: "home" | "center" }) {
   if (variant === "center") {
     return (
       <a
@@ -218,21 +204,18 @@ export function TodayBar({ variant }: { variant: "home" | "center" }) {
           e.preventDefault();
           const el = document.getElementById("today");
           if (el) {
-            window.scrollTo({
-              top: el.getBoundingClientRect().top + window.scrollY - 110,
-              behavior: "smooth",
-            });
+            window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110, behavior: "smooth" });
           }
         }}
         style={barStyle}
       >
-        <TodayBarInner />
+        <TodayBarInner matches={matches} />
       </a>
     );
   }
   return (
     <Link href="/match-center" style={barStyle}>
-      <TodayBarInner />
+      <TodayBarInner matches={matches} />
     </Link>
   );
 }
