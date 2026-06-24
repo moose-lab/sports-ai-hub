@@ -17,12 +17,12 @@ test("Cloudflare Pages deployment uses the canonical project URL and root asset 
   const workflow = readFileSync(workflowPath, "utf8");
   assert.match(workflow, /contents:\s*read/);
   assert.match(workflow, /deployments:\s*write/);
-  assert.match(workflow, /uses:\s*pnpm\/action-setup@v4/);
+  assert.match(workflow, /uses:\s*pnpm\/action-setup@v6/);
   assert.doesNotMatch(workflow, /version:\s*10\.4\.1/);
   assert.match(workflow, /pnpm run build:cloudflare/);
   assert.match(workflow, /CLOUDFLARE_ACCOUNT_ID/);
   assert.match(workflow, /CLOUDFLARE_API_TOKEN/);
-  assert.match(workflow, /uses:\s*cloudflare\/wrangler-action@v3/);
+  assert.match(workflow, /uses:\s*cloudflare\/wrangler-action@v4/);
   assert.match(workflow, /pages deploy dist\/public --project-name sports-ai-hub/);
   assert.doesNotMatch(workflow, /git push origin gh-pages/);
   assert.doesNotMatch(workflow, /moose-lab\.github\.io/);
