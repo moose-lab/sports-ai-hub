@@ -41,6 +41,8 @@ import {
   Terminal,
 } from "@/components/brand";
 import { TodayBar } from "@/components/worldcup/wc-primitives";
+import { useWorldCup } from "@/hooks/useWorldCup";
+import type { WcFixture } from "@/lib/worldcup";
 import {
   asset,
   builderPaths,
@@ -147,7 +149,7 @@ function TickerRow({ keyPrefix }: { keyPrefix: string }) {
   );
 }
 
-function Header({ onNav }: { onNav: (id: string) => void }) {
+function Header({ onNav, todayMatches }: { onNav: (id: string) => void; todayMatches: WcFixture[] }) {
   const navLinks: [string, string][] = [
     ["Directory", "directory"],
     ["Builder Path", "builder"],
@@ -328,7 +330,7 @@ function Header({ onNav }: { onNav: (id: string) => void }) {
       </div>
 
       {/* Amber "Today's matches" bar — the one World Cup element on the landing */}
-      <TodayBar variant="home" />
+      <TodayBar variant="home" matches={todayMatches} />
     </header>
   );
 }
@@ -1062,6 +1064,7 @@ function Footer() {
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function Home() {
   const [query, setQuery] = useState("");
+  const wc = useWorldCup();
 
   const onNav = (id: string) => {
     const el = document.getElementById(id);
@@ -1075,7 +1078,7 @@ export default function Home() {
 
   return (
     <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
-      <Header onNav={onNav} />
+      <Header onNav={onNav} todayMatches={wc.data?.today ?? []} />
       <Hero query={query} setQuery={setQuery} />
       <Directory query={query} />
       <BuilderPath />
