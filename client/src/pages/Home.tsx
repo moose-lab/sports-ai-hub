@@ -12,6 +12,7 @@
 import * as React from "react";
 import { useState } from "react";
 import {
+  ArrowRight,
   ArrowUpRight,
   CircleCheckBig,
   CircleDot,
@@ -20,7 +21,6 @@ import {
   GitFork,
   GitPullRequestArrow,
   LibraryBig,
-  Play,
   Radio,
   Route,
   Search,
@@ -28,6 +28,7 @@ import {
   Tag as TagIcon,
   Trophy,
 } from "lucide-react";
+import { Link } from "wouter";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,9 +38,9 @@ import {
   PhaseBadge,
   SectionHead,
   StatCard,
-  Tag,
   Terminal,
 } from "@/components/brand";
+import { TodayBar } from "@/components/worldcup/wc-primitives";
 import {
   asset,
   builderPaths,
@@ -55,7 +56,6 @@ import {
 } from "@/pages/home-data";
 
 const LOGO = asset("logo-icon.webp");
-const HERO_BG = asset("hero-bg.webp");
 const AWESOME = "https://github.com/moose-lab/awesome-sports-ai";
 
 // ── Shared link-buttons (anchor styled as a shadcn Button) ───────────────────
@@ -150,7 +150,6 @@ function TickerRow({ keyPrefix }: { keyPrefix: string }) {
 function Header({ onNav }: { onNav: (id: string) => void }) {
   const navLinks: [string, string][] = [
     ["Directory", "directory"],
-    ["World Cup 2026", "worldcup"],
     ["Builder Path", "builder"],
     ["Prototypes", "prototypes"],
   ];
@@ -226,6 +225,20 @@ function Header({ onNav }: { onNav: (id: string) => void }) {
                 {label}
               </a>
             ))}
+            <Link
+              href="/match-center"
+              className="hidden md:inline-flex"
+              style={{
+                fontSize: 14,
+                color: "var(--amber-alert)",
+                textDecoration: "none",
+                fontWeight: 600,
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              <Trophy size={14} /> World Cup 26
+            </Link>
             <PrimaryLink href={REPO} size="sm">
               <Star size={15} /> Star on GitHub
             </PrimaryLink>
@@ -313,6 +326,9 @@ function Header({ onNav }: { onNav: (id: string) => void }) {
           <Radio size={13} style={{ color: "var(--signal-green)" }} /> updated daily
         </div>
       </div>
+
+      {/* Amber "Today's matches" bar — the one World Cup element on the landing */}
+      <TodayBar variant="home" />
     </header>
   );
 }
@@ -335,7 +351,25 @@ function Hero({
             <PhaseBadge status="active" live>
               Phase 6 — Prototypes shipped
             </PhaseBadge>
-            <PhaseBadge status="upcoming">FIFA World Cup 2026</PhaseBadge>
+            <Link
+              href="/match-center"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                background: "var(--amber-a10)",
+                border: "1px solid var(--amber-a25)",
+                color: "var(--amber-alert)",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600,
+                fontSize: 12.5,
+                padding: "5px 12px",
+                borderRadius: "var(--radius-pill)",
+                textDecoration: "none",
+              }}
+            >
+              <Trophy size={13} /> World Cup 2026 <ArrowRight size={13} /> Match Center
+            </Link>
           </div>
 
           <h1
@@ -437,161 +471,6 @@ function Hero({
           {stats.map((s) => (
             <StatCard key={s.label} value={s.value} label={s.label} />
           ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ── Featured: FIFA World Cup 2026 ────────────────────────────────────────────
-function WorldCup() {
-  const soccerPicks = [
-    "statsbombpy",
-    "mplsoccer",
-    "socceraction",
-    "soccer_xg",
-    "SoccerNet",
-  ];
-  const metrics: [string, string][] = [
-    ["48", "Teams"],
-    ["104", "Matches"],
-    ["3", "Host nations"],
-  ];
-
-  return (
-    <section
-      id="worldcup"
-      style={{
-        position: "relative",
-        borderBottom: "1px solid var(--border)",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-        <img
-          src={HERO_BG}
-          alt=""
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: 0.5,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(90deg, var(--canvas) 28%, rgba(13,15,20,0.7) 70%, rgba(13,15,20,0.45))",
-          }}
-        />
-      </div>
-
-      <div
-        className="sa-container"
-        style={{ position: "relative", zIndex: 1, paddingTop: 64, paddingBottom: 64 }}
-      >
-        <div style={{ maxWidth: 620 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 18,
-              fontFamily: "var(--font-mono)",
-              fontSize: 12,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--signal-green)",
-            }}
-          >
-            <Trophy size={15} /> Featured · Summer 2026
-          </div>
-
-          <h2
-            className="text-[34px] sm:text-[44px]"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 800,
-              lineHeight: 1.06,
-              letterSpacing: "-0.02em",
-              margin: "0 0 16px",
-              color: "var(--fg-1)",
-            }}
-          >
-            Build for the
-            <br />
-            FIFA World Cup 2026.
-          </h2>
-
-          <p
-            style={{
-              fontSize: 17,
-              lineHeight: 1.6,
-              color: "var(--fg-2)",
-              margin: "0 0 22px",
-              maxWidth: 540,
-            }}
-          >
-            48 teams. 104 matches. Three host nations. The richest open soccer-data
-            moment in history — and the tools to model it are all here. Start with
-            event data, xG, and tactical analysis.
-          </p>
-
-          <div
-            style={{ display: "flex", gap: 28, flexWrap: "wrap", marginBottom: 26 }}
-          >
-            {metrics.map(([v, l]) => (
-              <div key={l}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 30,
-                    color: "var(--signal-green)",
-                    lineHeight: 1,
-                  }}
-                >
-                  {v}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: "var(--fg-3)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.1em",
-                    marginTop: 4,
-                  }}
-                >
-                  {l}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginBottom: 22 }}>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--fg-3)",
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                marginBottom: 10,
-              }}
-            >
-              Soccer toolkit to start with
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {soccerPicks.map((t) => (
-                <Tag key={t}>{t}</Tag>
-              ))}
-            </div>
-          </div>
-
-          <PrimaryLink href={`${AWESOME}/tree/main/prototypes/llm-match-commentator`}>
-            <Play size={15} /> Run the live commentator
-          </PrimaryLink>
         </div>
       </div>
     </section>
@@ -1198,7 +1077,6 @@ export default function Home() {
     <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
       <Header onNav={onNav} />
       <Hero query={query} setQuery={setQuery} />
-      <WorldCup />
       <Directory query={query} />
       <BuilderPath />
       <Prototypes />
