@@ -36,6 +36,13 @@ const HERO_BG = asset("hero-bg.webp");
 /** The exact file the World Cup snapshot is read from — GitHub deep-link. */
 const SOURCE_FILE = `${REPO}/blob/main/visualizations/source-data.json`;
 
+/** Parse a feed date label ("Jun 24") to a sortable month*100+day number. */
+const MONTHS: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+function dayNum(label: string): number {
+  const [mon, day] = label.trim().split(/\s+/);
+  return (MONTHS[mon] ?? 0) * 100 + (parseInt(day ?? "", 10) || 0);
+}
+
 const eyebrow: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -168,6 +175,19 @@ function Content({ data }: { data: WorldCup }) {
     if (last && last.date === m.date) last.items.push(m);
     else byDate.push({ date: m.date, items: [m] });
   }
+  // Order: today first, descending back to the Jun 11 opener; any
+  // future-dated fixtures trail at the end (nearest first).
+  const todayNum = byDate.some((g) => g.date === data.todayLabel)
+    ? dayNum(data.todayLabel)
+    : Math.max(0, ...byDate.map((g) => dayNum(g.date)));
+  byDate.sort((a, b) => {
+    const da = dayNum(a.date);
+    const db = dayNum(b.date);
+    const aFuture = da > todayNum;
+    const bFuture = db > todayNum;
+    if (aFuture !== bFuture) return aFuture ? 1 : -1; // future groups go last
+    return aFuture ? da - db : db - da; // future ascending, today→opener descending
+  });
 
   const selectMatch = (id: string) => {
     setSelId(id);
