@@ -149,7 +149,7 @@ function TickerRow({ keyPrefix }: { keyPrefix: string }) {
   );
 }
 
-function Header({ onNav, todayMatches }: { onNav: (id: string) => void; todayMatches: WcFixture[] }) {
+function Header({ onNav, todayMatches, isLive }: { onNav: (id: string) => void; todayMatches: WcFixture[]; isLive: boolean }) {
   const navLinks: [string, string][] = [
     ["Directory", "directory"],
     ["Builder Path", "builder"],
@@ -325,7 +325,16 @@ function Header({ onNav, todayMatches }: { onNav: (id: string) => void; todayMat
             color: "var(--fg-3)",
           }}
         >
-          <Radio size={13} style={{ color: "var(--signal-green)" }} /> updated daily
+          {isLive ? (
+            <>
+              <span className="pulse-dot" style={{ width: 7, height: 7, background: "var(--signal-green)" }} />
+              LIVE — auto-updating
+            </>
+          ) : (
+            <>
+              <Radio size={13} style={{ color: "var(--signal-green)" }} /> auto-updating
+            </>
+          )}
         </div>
       </div>
 
@@ -1078,7 +1087,7 @@ export default function Home() {
 
   return (
     <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
-      <Header onNav={onNav} todayMatches={wc.data?.today ?? []} />
+      <Header onNav={onNav} todayMatches={wc.data?.today ?? []} isLive={wc.isLive} />
       <Hero query={query} setQuery={setQuery} />
       <Directory query={query} />
       <BuilderPath />

@@ -2,10 +2,12 @@
  * Sports AI Hub — FIFA World Cup 2026 live data.
  *
  * Source of truth: the `awesome-sports-ai` repo runs a scheduled job
- * (`sync-fifa-world-cup.mjs`, every ~3h) that commits a snapshot to
- * `visualizations/source-data.json`. We fetch that file at runtime (it is
- * served with `access-control-allow-origin: *`), so when the repo syncs new
- * match data the website reflects it without a redeploy.
+ * (`sync-fifa-world-cup.mjs`, every ~5 min during the tournament window) that
+ * commits a snapshot to `visualizations/source-data.json`. We fetch that file
+ * at runtime (it is served with `access-control-allow-origin: *`), so when the
+ * repo syncs new match data the website reflects it without a redeploy. Note
+ * the raw file is CDN-cached with a ~5 min edge TTL, which is the true
+ * freshness floor regardless of how often we poll.
  *
  * The feed gives fixtures with a dual-purpose `score` field: a result like
  * "MEX 2 - RSA 0" (which also encodes the 3-letter team codes) when Final,
@@ -130,10 +132,15 @@ const SCORE_RE = /^\s*([A-Za-z]{2,4})\s+(\d+)\s*[-–]\s*([A-Za-z]{2,4})\s+(\d+)
 const normalizeName = (n: string) =>
   n.toLowerCase().replace(/\band\b/g, "").replace(/[^a-z]/g, "");
 
+/** Stable, position-independent slug for a fixture id (date + match). */
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
 function statusOf(raw: string): WcStatus {
   const s = (raw || "").toLowerCase();
-  if (s.includes("final") || s.includes("full")) return "final";
-  if (s.includes("live") || s.includes("play")) return "live";
+  // Word-boundary matches so "Playoff"/"Full schedule" aren't misread as live/final.
+  if (/\b(final|full[- ]?time|ft)\b/.test(s)) return "final";
+  if (/\b(live|in[- ]?play|in progress)\b/.test(s)) return "live";
   return "scheduled";
 }
 
@@ -214,7 +221,9 @@ export function parseWorldCup(root: any): WorldCup {
     }
 
     return {
-      id: `fx${i}`,
+      // Stable across polls so a reordered/inserted fixture doesn't shift ids
+      // and silently move the user's Match Center selection.
+      id: slugify(`${f.date} ${f.match}`) || `fx${i}`,
       date: f.date,
       group: f.group,
       venue: f.venue,
@@ -292,10 +301,46 @@ export function computeStandings(fixtures: WcFixture[]): WcStandingGroup[] {
   return result;
 }
 
-/** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
-export async function fetchWorldCup(signal?: AbortSignal): Promise<WorldCup> {
+export interface WorldCupSnapshot {
+  /** Exact response body text — used by the hook for byte-level change detection. */
+  raw: string;
+  data: WorldCup;
+}
+
+/**
+ * A snapshot is only usable if it carries at least one fixture. An empty or
+ * unexpected payload (missing `fifaWorldCup`, missing/empty `confirmedFixtures`,
+ * a 200 with the wrong shape) parses to zero fixtures — there is nothing to
+ * render, so callers should treat it as a failure and retry rather than show an
+ * empty World Cup zone.
+ */
+export function isUsableWorldCup(data: WorldCup): boolean {
+  return Array.isArray(data.fixtures) && data.fixtures.length > 0;
+}
+
+/** Fetch + parse the live snapshot, keeping the raw body for change detection. */
+export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<WorldCupSnapshot> {
   const res = await fetch(WC_SOURCE_URL, { signal, cache: "no-store" });
   if (!res.ok) throw new Error(`World Cup feed responded ${res.status}`);
-  const json = await res.json();
-  return parseWorldCup(json);
+  const raw = await res.text();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("World Cup feed returned malformed data");
+  }
+  const data = parseWorldCup(parsed);
+  // Treat an empty/unexpected payload as a failure so the hook retries it.
+  if (!isUsableWorldCup(data)) throw new Error("World Cup feed returned no fixtures");
+  return { raw, data };
+}
+
+/** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
+export async function fetchWorldCup(signal?: AbortSignal): Promise<WorldCup> {
+  return (await fetchWorldCupSnapshot(signal)).data;
+}
+
+/** True when any fixture is currently in play. */
+export function hasLiveFixture(data: WorldCup): boolean {
+  return Array.isArray(data.fixtures) && data.fixtures.some((f) => f.status === "live");
 }
