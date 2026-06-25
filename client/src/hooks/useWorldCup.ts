@@ -28,6 +28,12 @@ const RETRY_BASE_MS = 1_000; // first retry delay; doubles each consecutive fail
 const RETRY_MAX_MS = 30_000; // backoff cap
 const FAILS_BEFORE_ERROR = 3; // keep first load in `loading` through this many fast retries
 
+/** Exponential backoff for the Nth consecutive failure (1→1s, 2→2s, …, capped). */
+export function backoffDelay(failures: number, baseMs = RETRY_BASE_MS, maxMs = RETRY_MAX_MS): number {
+  if (failures <= 0) return 0;
+  return Math.min(baseMs * 2 ** (failures - 1), maxMs);
+}
+
 export interface WorldCupState {
   status: "loading" | "ready" | "error";
   data: WorldCup | null;
@@ -100,11 +106,7 @@ export function useWorldCup(): WorldCupState {
         inFlight = false;
         if (!cancelled) {
           const delay =
-            failures === 0
-              ? lastLive
-                ? LIVE_INTERVAL_MS
-                : BASE_INTERVAL_MS
-              : Math.min(RETRY_BASE_MS * 2 ** (failures - 1), RETRY_MAX_MS);
+            failures === 0 ? (lastLive ? LIVE_INTERVAL_MS : BASE_INTERVAL_MS) : backoffDelay(failures);
           scheduleNext(delay);
         }
       }

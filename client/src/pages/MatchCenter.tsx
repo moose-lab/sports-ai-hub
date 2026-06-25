@@ -152,13 +152,24 @@ const FILTER_DEFS: { label: string; status: WcStatus | null }[] = [
   { label: "Live", status: "live" },
 ];
 
-/** "updated Ns ago" — re-renders every 15s so the label stays honest. */
+/**
+ * "updated Ns ago" — self-correcting so the label is never stale: it ticks
+ * every second while showing seconds, then every 30s once it's in minutes.
+ */
 function UpdatedAgo({ at }: { at: number | null }) {
   const [, force] = useState(0);
   useEffect(() => {
     if (at == null) return;
-    const id = setInterval(() => force((n) => n + 1), 15_000);
-    return () => clearInterval(id);
+    let id: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const secs = (Date.now() - at) / 1000;
+      id = setTimeout(() => {
+        force((n) => n + 1);
+        schedule();
+      }, secs < 60 ? 1_000 : 30_000);
+    };
+    schedule();
+    return () => clearTimeout(id);
   }, [at]);
   if (at == null) return null;
   const secs = Math.max(0, Math.round((Date.now() - at) / 1000));
