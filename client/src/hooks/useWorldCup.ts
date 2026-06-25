@@ -18,6 +18,10 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchWorldCupSnapshot, hasLiveFixture, type WorldCup } from "@/lib/worldcup";
 
+// raw.githubusercontent.com sits behind a CDN with a ~5min edge TTL that
+// `cache: "no-store"` cannot bypass, so the true data-freshness floor is ~5min
+// (matching the upstream cron). These intervals bound how fast we *detect* a
+// newly edge-cached snapshot, not how fresh the underlying data is.
 const BASE_INTERVAL_MS = 60_000;
 const LIVE_INTERVAL_MS = 25_000;
 const RETRY_BASE_MS = 1_000; // first retry delay; doubles each consecutive failure
