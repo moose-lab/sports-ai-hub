@@ -9,7 +9,7 @@
 import * as React from "react";
 import { useState } from "react";
 import type { WcFixture, WcMilestone, WcStandingGroup, WcTeam } from "@/lib/worldcup";
-import { Crest, StatusPill } from "@/components/worldcup/wc-primitives";
+import { Crest, Flag, StatusPill } from "@/components/worldcup/wc-primitives";
 
 /* ── Scoreboard (Match Center hero) ─────────────────────────── */
 export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) {
@@ -163,7 +163,7 @@ export function Standings({ group }: { group: WcStandingGroup }) {
             >
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: qual ? "var(--amber-alert)" : "var(--fg-3)", fontWeight: 700 }}>{i + 1}</span>
               <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-                <span style={{ width: 16, height: 16, borderRadius: 4, background: r.color, flex: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)" }} />
+                <Flag team={r} w={20} h={14} />
                 <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 13.5, color: "var(--fg-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</span>
               </span>
               {[r.p, r.w, r.d, r.l].map((v, j) => (

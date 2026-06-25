@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
+  ArrowUpRight,
   CalendarDays,
   ExternalLink,
   Flag,
@@ -32,6 +33,8 @@ import { MatchCard, Milestones, Scoreboard, Standings } from "@/components/world
 
 const LOGO = asset("logo-icon.webp");
 const HERO_BG = asset("hero-bg.webp");
+/** The exact file the World Cup snapshot is read from — GitHub deep-link. */
+const SOURCE_FILE = `${REPO}/blob/main/visualizations/source-data.json`;
 
 const eyebrow: React.CSSProperties = {
   display: "inline-flex",
@@ -158,6 +161,14 @@ function Content({ data }: { data: WorldCup }) {
   const activeStatus = filters.find((f) => f.label === filter)?.status ?? null;
   const shown = fixtures.filter((m) => !activeStatus || m.status === activeStatus);
 
+  // Group the schedule by day (the feed is chronological).
+  const byDate: { date: string; items: WcFixture[] }[] = [];
+  for (const m of shown) {
+    const last = byDate[byDate.length - 1];
+    if (last && last.date === m.date) last.items.push(m);
+    else byDate.push({ date: m.date, items: [m] });
+  }
+
   const selectMatch = (id: string) => {
     setSelId(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -188,6 +199,14 @@ function Content({ data }: { data: WorldCup }) {
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-4)", padding: "3px 9px", border: "1px solid var(--border)", borderRadius: "var(--radius-pill)" }}>
               <RefreshCw size={12} style={{ color: "var(--amber-alert)" }} /> {data.updated || "Synced from awesome-sports-ai"}
             </span>
+            <a
+              href={SOURCE_FILE}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--amber-alert)", textDecoration: "none", padding: "3px 10px", border: "1px solid var(--amber-a25)", background: "var(--amber-a10)", borderRadius: "var(--radius-pill)" }}
+            >
+              <Github size={12} /> source-data.json <ArrowUpRight size={11} />
+            </a>
           </div>
 
           <div className="grid grid-cols-1 min-[900px]:grid-cols-[1.35fr_1fr]" style={{ gap: 22, alignItems: "stretch" }}>
@@ -212,19 +231,24 @@ function Content({ data }: { data: WorldCup }) {
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
-                {data.links.slice(0, 1).map((l) => (
-                  <Button key={l.url} asChild variant="outline" size="sm" className="border-[var(--border)] bg-transparent text-[var(--fg-2)] hover:text-[var(--signal-green)] hover:border-[var(--green-a40)] dark:bg-transparent dark:border-[var(--border)]">
-                    <a href={l.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink size={14} /> {l.label}
+              <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--fg-4)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Linked resources
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {data.links.map((l) => (
+                    <Button key={l.url} asChild variant="outline" size="sm" className="border-[var(--border)] bg-transparent text-[var(--fg-2)] hover:text-[var(--signal-green)] hover:border-[var(--green-a40)] dark:bg-transparent dark:border-[var(--border)]">
+                      <a href={l.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink size={14} /> {l.label}
+                      </a>
+                    </Button>
+                  ))}
+                  <Button asChild variant="ghost" size="sm" className="text-[var(--fg-2)] hover:text-[var(--signal-green)]">
+                    <a href={SOURCE_FILE} target="_blank" rel="noopener noreferrer">
+                      <Github size={14} /> Open data
                     </a>
                   </Button>
-                ))}
-                <Button asChild variant="ghost" size="sm" className="text-[var(--fg-2)] hover:text-[var(--signal-green)]">
-                  <a href={`${REPO}/blob/main/visualizations/source-data.json`} target="_blank" rel="noopener noreferrer">
-                    <Github size={14} /> Open data
-                  </a>
-                </Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -282,14 +306,33 @@ function Content({ data }: { data: WorldCup }) {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-            {shown.map((m) => (
-              <MatchCard key={m.id} m={m} active={m.id === selId} onClick={() => selectMatch(m.id)} />
-            ))}
-          </div>
-          {shown.length === 0 && (
+          {shown.length === 0 ? (
             <div style={{ padding: "40px 0", textAlign: "center", color: "var(--fg-3)", fontFamily: "var(--font-mono)", fontSize: 14 }}>
               No {filter.toLowerCase()} matches right now.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+              {byDate.map((g) => (
+                <div key={g.date}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, paddingBottom: 8, borderBottom: "1px solid var(--border)" }}>
+                    <CalendarDays size={14} style={{ color: "var(--amber-alert)" }} />
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 15, color: "var(--fg-1)" }}>{g.date}</span>
+                    {g.date === data.todayLabel && (
+                      <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 10, letterSpacing: "0.08em", color: "#1a1206", background: "var(--amber-alert)", padding: "2px 7px", borderRadius: "var(--radius-pill)" }}>
+                        TODAY
+                      </span>
+                    )}
+                    <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-4)" }}>
+                      {g.items.length} {g.items.length === 1 ? "match" : "matches"}
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
+                    {g.items.map((m) => (
+                      <MatchCard key={m.id} m={m} active={m.id === selId} onClick={() => selectMatch(m.id)} />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

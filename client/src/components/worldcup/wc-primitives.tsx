@@ -39,14 +39,33 @@ export function Flag({ team, w = 17, h = 12 }: { team: WcTeam; w?: number; h?: n
   );
 }
 
-/* ── Team crest ─────────────────────────────────────────────── */
+/* ── Team crest — the national flag, with a color+code fallback ── */
 export function Crest({ team, size = 44 }: { team: WcTeam; size?: number }) {
+  const iso = flagIso(team);
+  const [failed, setFailed] = useState(false);
+  const h = Math.round(size * 0.72); // flags read ~3:2
+  const radius = Math.max(4, Math.round(size * 0.16));
+  const ring = "inset 0 0 0 1px rgba(255,255,255,0.16)";
+
+  if (iso && !failed) {
+    return (
+      <img
+        src={flagSrc(iso)}
+        alt={`${team.name} flag`}
+        width={size}
+        height={h}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        style={{ width: size, height: h, borderRadius: radius, objectFit: "cover", flex: "none", boxShadow: ring, display: "block" }}
+      />
+    );
+  }
   return (
     <div
       style={{
         width: size,
-        height: size,
-        borderRadius: 9,
+        height: h,
+        borderRadius: radius,
         background: team.color,
         display: "flex",
         alignItems: "center",
@@ -54,9 +73,9 @@ export function Crest({ team, size = 44 }: { team: WcTeam; size?: number }) {
         flex: "none",
         fontFamily: "var(--font-mono)",
         fontWeight: 700,
-        fontSize: Math.round(size * 0.3),
+        fontSize: Math.round(size * 0.26),
         color: readableOn(team.color),
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.14)",
+        boxShadow: ring,
       }}
     >
       {team.code}
