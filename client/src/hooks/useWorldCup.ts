@@ -6,12 +6,22 @@
  * change detection means an unchanged snapshot does NOT re-render consumers
  * (preserves MatchCenter's selection/scroll). After the first successful load,
  * transient refetch failures keep the last-good data instead of flipping to error.
+ *
+ * Fault tolerance: a failed fetch/parse never gives up. It retries with
+ * exponential backoff (1s → 2s → … → 30s cap) until it succeeds, then resumes
+ * the normal cadence. The first load stays in `loading` through the first few
+ * fast retries and only surfaces `error` after FAILS_BEFORE_ERROR consecutive
+ * failures — and even then it keeps retrying in the background and self-heals.
+ * `online`/visibility regain triggers an immediate retry.
  */
 import { useEffect, useRef, useState } from "react";
 import { fetchWorldCupSnapshot, hasLiveFixture, type WorldCup } from "@/lib/worldcup";
 
 const BASE_INTERVAL_MS = 60_000;
 const LIVE_INTERVAL_MS = 25_000;
+const RETRY_BASE_MS = 1_000; // first retry delay; doubles each consecutive failure
+const RETRY_MAX_MS = 30_000; // backoff cap
+const FAILS_BEFORE_ERROR = 3; // keep first load in `loading` through this many fast retries
 
 export interface WorldCupState {
   status: "loading" | "ready" | "error";
@@ -39,12 +49,13 @@ export function useWorldCup(): WorldCupState {
     let cancelled = false;
     let inFlight = false;
     let lastLive = false;
+    let failures = 0; // consecutive failures; drives backoff and first-load error gating
     let ctrl: AbortController | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const scheduleNext = () => {
+    const scheduleNext = (delayMs: number) => {
       if (timer) clearTimeout(timer);
-      timer = setTimeout(tick, lastLive ? LIVE_INTERVAL_MS : BASE_INTERVAL_MS);
+      timer = setTimeout(tick, delayMs);
     };
 
     async function tick() {
@@ -55,6 +66,7 @@ export function useWorldCup(): WorldCupState {
       try {
         const { raw, data } = await fetchWorldCupSnapshot(ctrl.signal);
         if (cancelled) return;
+        failures = 0;
         lastLive = hasLiveFixture(data);
         if (raw === rawRef.current) {
           setState((s) => (s.isLive === lastLive ? s : { ...s, isLive: lastLive }));
@@ -65,21 +77,31 @@ export function useWorldCup(): WorldCupState {
       } catch (e) {
         if (cancelled) return;
         if (e instanceof DOMException && e.name === "AbortError") return;
-        // Keep last-good data on transient refetch failures; only first load errors.
-        setState((s) =>
-          s.status === "ready"
-            ? s
-            : {
-                status: "error",
-                data: null,
-                error: e instanceof Error ? e.message : String(e),
-                lastUpdatedAt: null,
-                isLive: false,
-              },
-        );
+        failures += 1;
+        setState((s) => {
+          if (s.status === "ready") return s; // keep last-good data; retry silently
+          // First load still pending: stay in `loading` through the fast retries,
+          // only surface `error` after FAILS_BEFORE_ERROR consecutive failures.
+          if (failures < FAILS_BEFORE_ERROR) return s.status === "loading" ? s : { ...s, status: "loading" };
+          return {
+            status: "error",
+            data: null,
+            error: e instanceof Error ? e.message : String(e),
+            lastUpdatedAt: null,
+            isLive: false,
+          };
+        });
       } finally {
         inFlight = false;
-        if (!cancelled) scheduleNext();
+        if (!cancelled) {
+          const delay =
+            failures === 0
+              ? lastLive
+                ? LIVE_INTERVAL_MS
+                : BASE_INTERVAL_MS
+              : Math.min(RETRY_BASE_MS * 2 ** (failures - 1), RETRY_MAX_MS);
+          scheduleNext(delay);
+        }
       }
     }
 
