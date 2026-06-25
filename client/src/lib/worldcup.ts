@@ -292,10 +292,26 @@ export function computeStandings(fixtures: WcFixture[]): WcStandingGroup[] {
   return result;
 }
 
-/** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
-export async function fetchWorldCup(signal?: AbortSignal): Promise<WorldCup> {
+export interface WorldCupSnapshot {
+  /** Exact response body text — used by the hook for byte-level change detection. */
+  raw: string;
+  data: WorldCup;
+}
+
+/** Fetch + parse the live snapshot, keeping the raw body for change detection. */
+export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<WorldCupSnapshot> {
   const res = await fetch(WC_SOURCE_URL, { signal, cache: "no-store" });
   if (!res.ok) throw new Error(`World Cup feed responded ${res.status}`);
-  const json = await res.json();
-  return parseWorldCup(json);
+  const raw = await res.text();
+  return { raw, data: parseWorldCup(JSON.parse(raw)) };
+}
+
+/** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
+export async function fetchWorldCup(signal?: AbortSignal): Promise<WorldCup> {
+  return (await fetchWorldCupSnapshot(signal)).data;
+}
+
+/** True when any fixture is currently in play. */
+export function hasLiveFixture(data: WorldCup): boolean {
+  return data.fixtures.some((f) => f.status === "live");
 }
