@@ -11,7 +11,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
-    "test": "node --test scripts/*.test.mjs",
+    "test": "vitest run && node --test scripts/*.test.mjs",
+    "test:unit": "vitest run",
     "format": "prettier --write ."
   },
   "dependencies": {

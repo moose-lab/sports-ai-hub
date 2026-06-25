@@ -133,10 +133,10 @@ const normalizeName = (n: string) =>
   n.toLowerCase().replace(/\band\b/g, "").replace(/[^a-z]/g, "");
 
 /** Stable, position-independent slug for a fixture id (date + match). */
-const slugify = (s: string) =>
+export const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-function statusOf(raw: string): WcStatus {
+export function statusOf(raw: string): WcStatus {
   const s = (raw || "").toLowerCase();
   // Word-boundary matches so "Playoff"/"Full schedule" aren't misread as live/final.
   if (/\b(final|full[- ]?time|ft)\b/.test(s)) return "final";
@@ -333,11 +333,6 @@ export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<World
   // Treat an empty/unexpected payload as a failure so the hook retries it.
   if (!isUsableWorldCup(data)) throw new Error("World Cup feed returned no fixtures");
   return { raw, data };
-}
-
-/** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
-export async function fetchWorldCup(signal?: AbortSignal): Promise<WorldCup> {
-  return (await fetchWorldCupSnapshot(signal)).data;
 }
 
 /** True when any fixture is currently in play. */
