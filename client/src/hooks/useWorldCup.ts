@@ -7,8 +7,9 @@
  * (preserves MatchCenter's selection/scroll). After the first successful load,
  * transient refetch failures keep the last-good data instead of flipping to error.
  *
- * Fault tolerance: a failed fetch/parse never gives up. It retries with
- * exponential backoff (1s → 2s → … → 30s cap) until it succeeds, then resumes
+ * Fault tolerance: a failed fetch/parse — or a 200 with an empty/unexpected
+ * payload (zero fixtures, see isUsableWorldCup) — never gives up. It retries
+ * with exponential backoff (1s → 2s → … → 30s cap) until it succeeds, then resumes
  * the normal cadence. The first load stays in `loading` through the first few
  * fast retries and only surfaces `error` after FAILS_BEFORE_ERROR consecutive
  * failures — and even then it keeps retrying in the background and self-heals.

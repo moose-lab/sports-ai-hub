@@ -298,12 +298,26 @@ export interface WorldCupSnapshot {
   data: WorldCup;
 }
 
+/**
+ * A snapshot is only usable if it carries at least one fixture. An empty or
+ * unexpected payload (missing `fifaWorldCup`, missing/empty `confirmedFixtures`,
+ * a 200 with the wrong shape) parses to zero fixtures — there is nothing to
+ * render, so callers should treat it as a failure and retry rather than show an
+ * empty World Cup zone.
+ */
+export function isUsableWorldCup(data: WorldCup): boolean {
+  return Array.isArray(data.fixtures) && data.fixtures.length > 0;
+}
+
 /** Fetch + parse the live snapshot, keeping the raw body for change detection. */
 export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<WorldCupSnapshot> {
   const res = await fetch(WC_SOURCE_URL, { signal, cache: "no-store" });
   if (!res.ok) throw new Error(`World Cup feed responded ${res.status}`);
   const raw = await res.text();
-  return { raw, data: parseWorldCup(JSON.parse(raw)) };
+  const data = parseWorldCup(JSON.parse(raw));
+  // Treat an empty/unexpected payload as a failure so the hook retries it.
+  if (!isUsableWorldCup(data)) throw new Error("World Cup feed returned no fixtures");
+  return { raw, data };
 }
 
 /** Fetch + parse the live World Cup snapshot. Throws on network/parse error. */
