@@ -7,7 +7,7 @@
  */
 
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -152,8 +152,22 @@ const FILTER_DEFS: { label: string; status: WcStatus | null }[] = [
   { label: "Live", status: "live" },
 ];
 
+/** "updated Ns ago" — re-renders every 15s so the label stays honest. */
+function UpdatedAgo({ at }: { at: number | null }) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    if (at == null) return;
+    const id = setInterval(() => force((n) => n + 1), 15_000);
+    return () => clearInterval(id);
+  }, [at]);
+  if (at == null) return null;
+  const secs = Math.max(0, Math.round((Date.now() - at) / 1000));
+  const label = secs < 60 ? `${secs}s ago` : `${Math.round(secs / 60)}m ago`;
+  return <>updated {label}</>;
+}
+
 // ── Ready content ────────────────────────────────────────────────────────────
-function Content({ data }: { data: WorldCup }) {
+function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedAt: number | null; isLive: boolean }) {
   const fixtures = data.fixtures;
   const defaultFixture = data.today[0] ?? fixtures[0];
   const [selId, setSelId] = useState(defaultFixture?.id);
@@ -217,7 +231,18 @@ function Content({ data }: { data: WorldCup }) {
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12.5, color: "var(--fg-3)" }}>{data.subtitle}</span>
             )}
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-4)", padding: "3px 9px", border: "1px solid var(--border)", borderRadius: "var(--radius-pill)" }}>
-              <RefreshCw size={12} style={{ color: "var(--amber-alert)" }} /> {data.updated || "Synced from awesome-sports-ai"}
+              {isLive ? (
+                <span className="pulse-dot" style={{ width: 7, height: 7, background: "var(--signal-green)" }} />
+              ) : (
+                <RefreshCw size={12} style={{ color: "var(--amber-alert)" }} />
+              )}{" "}
+              {data.updated || "Synced from awesome-sports-ai"}
+              {lastUpdatedAt != null && (
+                <span style={{ color: "var(--fg-4)" }}>
+                  {" · "}
+                  <UpdatedAgo at={lastUpdatedAt} />
+                </span>
+              )}
             </span>
             <a
               href={SOURCE_FILE}
@@ -399,7 +424,9 @@ export default function MatchCenter() {
       <Header todayMatches={wc.data?.today ?? []} />
       {wc.status === "loading" && <LoadingState />}
       {wc.status === "error" && <ErrorState message={wc.error} />}
-      {wc.status === "ready" && wc.data && <Content data={wc.data} />}
+      {wc.status === "ready" && wc.data && (
+        <Content data={wc.data} lastUpdatedAt={wc.lastUpdatedAt} isLive={wc.isLive} />
+      )}
       <Footer />
     </div>
   );
