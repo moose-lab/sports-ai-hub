@@ -3,11 +3,13 @@
  *
  * Source of truth: the `awesome-sports-ai` repo runs a scheduled job
  * (`sync-fifa-world-cup.mjs`, every ~5 min during the tournament window) that
- * commits a snapshot to `visualizations/source-data.json`. We fetch that file
- * at runtime (it is served with `access-control-allow-origin: *`), so when the
- * repo syncs new match data the website reflects it without a redeploy. Note
- * the raw file is CDN-cached with a ~5 min edge TTL, which is the true
- * freshness floor regardless of how often we poll.
+ * commits a snapshot to `visualizations/source-data.json`.
+ *
+ * We no longer fetch that raw file directly (its ~5 min CDN edge TTL stacked on
+ * the ~5 min cron made the live data lag 10+ min). Instead we hit the same-origin
+ * `/api/worldcup` Pages Function, which overlays ESPN's ~6-second-fresh scores
+ * onto the snapshot at request time. The shape is identical, so the parser below
+ * is unchanged.
  *
  * The feed gives fixtures with a dual-purpose `score` field: a result like
  * "MEX 2 - RSA 0" (which also encodes the 3-letter team codes) when Final,
@@ -16,8 +18,13 @@
  * group standings from the final results.
  */
 
-export const WC_SOURCE_URL =
-  "https://raw.githubusercontent.com/moose-lab/awesome-sports-ai/main/visualizations/source-data.json";
+/**
+ * Same-origin Cloudflare Pages Function (`functions/api/worldcup.ts`) that
+ * overlays ESPN's live scores onto the GitHub snapshot — far fresher than the
+ * raw feed's 5-min CDN. Override with `VITE_WC_SOURCE` (e.g. point straight at
+ * raw in environments without the Function).
+ */
+export const WC_SOURCE_URL = import.meta.env?.VITE_WC_SOURCE ?? "/api/worldcup";
 
 export type WcStatus = "final" | "scheduled" | "live";
 
@@ -151,6 +158,22 @@ function refDateLabel(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
+/**
+ * Convert the feed's Eastern-time kickoff label ("11 p.m. ET") to UTC
+ * ("03:00 UTC"). The 2026 tournament window (Jun–Jul) is entirely Eastern
+ * Daylight Time, a fixed UTC-4 offset, so no DST branching is needed. Returns
+ * the input unchanged when it isn't an ET clock time.
+ */
+export function toUtcKickoff(label: string): string {
+  const m = label.match(/^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?\s*ET\s*$/i);
+  if (!m) return label;
+  let h = parseInt(m[1], 10) % 12;
+  if (m[3].toLowerCase() === "p") h += 12;
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const utc = (h + 4) % 24; // ET (EDT) → UTC
+  return `${String(utc).padStart(2, "0")}:${String(min).padStart(2, "0")} UTC`;
+}
+
 /* ── Parsing ─────────────────────────────────────────────────── */
 
 interface RawFixture {
@@ -217,7 +240,7 @@ export function parseWorldCup(root: any): WorldCup {
       const aCode = codeFor(awayName);
       home = { name: homeName, code: hCode, color: teamColor(hCode) };
       away = { name: awayName, code: aCode, color: teamColor(aCode) };
-      kickoff = String(f.score || "").trim() || undefined; // scheduled: score holds the time
+      kickoff = toUtcKickoff(String(f.score || "").trim()) || undefined; // scheduled: score holds the time (shown in UTC)
     }
 
     return {
@@ -338,4 +361,44 @@ export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<World
 /** True when any fixture is currently in play. */
 export function hasLiveFixture(data: WorldCup): boolean {
   return Array.isArray(data.fixtures) && data.fixtures.some((f) => f.status === "live");
+}
+
+/* ── Hottest fixture ─────────────────────────────────────────── */
+
+/** Marquee tags the feed uses for standout fixtures. */
+const HOT_TAGS = /\b(marquee|opener|final|knockout|semi|quarter|host)\b/i;
+
+/** A fixture worth a "HOT" label: in play now, or a marquee-tagged tie. */
+export function isHot(f: WcFixture): boolean {
+  return f.status === "live" || HOT_TAGS.test(f.tag || "");
+}
+
+/** Pick the marquee-tagged fixture from a set, else the first (feed order). */
+function pickMarquee(pool: WcFixture[]): WcFixture | undefined {
+  return pool.find((f) => HOT_TAGS.test(f.tag || "")) ?? pool[0];
+}
+
+/**
+ * The single fixture to feature by default. Driven by live status — NOT the
+ * snapshot's feature day — so a match still in play is never skipped when the
+ * generatedDate has already rolled to the next day:
+ *   1. a match in play right now (the live focus), else
+ *   2. the hottest fixture of the nearest upcoming day (临近的热门赛事), else
+ *   3. the most recent fixture once the tournament is over.
+ * The feed is chronological, so the first scheduled fixture is the soonest.
+ */
+export function hottestFixture(data: WorldCup): WcFixture | undefined {
+  const fixtures = data.fixtures;
+  if (fixtures.length === 0) return undefined;
+
+  const live = fixtures.filter((f) => f.status === "live");
+  if (live.length > 0) return pickMarquee(live);
+
+  const upcoming = fixtures.filter((f) => f.status === "scheduled");
+  if (upcoming.length > 0) {
+    const nextDay = upcoming[0].date; // earliest scheduled day
+    return pickMarquee(upcoming.filter((f) => f.date === nextDay));
+  }
+
+  return fixtures[fixtures.length - 1];
 }

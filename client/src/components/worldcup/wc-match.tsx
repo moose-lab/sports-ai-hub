@@ -8,8 +8,33 @@
 
 import * as React from "react";
 import { useState } from "react";
-import type { WcFixture, WcMilestone, WcStandingGroup, WcTeam } from "@/lib/worldcup";
+import { Flame } from "lucide-react";
+import { isHot, type WcFixture, type WcMilestone, type WcStandingGroup, type WcTeam } from "@/lib/worldcup";
 import { Crest, Flag, StatusPill } from "@/components/worldcup/wc-primitives";
+
+/* ── "HOT" label for standout fixtures (live or marquee ties) ── */
+function HotBadge() {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "3px 8px",
+        borderRadius: "var(--radius-pill)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 10.5,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: "#1a1206",
+        background: "var(--amber-alert)",
+      }}
+    >
+      <Flame size={11} /> Hot
+    </span>
+  );
+}
 
 /* ── Scoreboard (Match Center hero) ─────────────────────────── */
 export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) {
@@ -29,7 +54,10 @@ export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) 
           flexWrap: "wrap",
         }}
       >
-        <StatusPill m={m} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <StatusPill m={m} />
+          {isHot(m) && <HotBadge />}
+        </span>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-3)", letterSpacing: "0.04em" }}>
           {m.group} · {m.venue}
         </span>
@@ -118,7 +146,10 @@ export function MatchCard({ m, onClick, active = false }: { m: WcFixture; onClic
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-        <StatusPill m={m} />
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <StatusPill m={m} />
+          {isHot(m) && <HotBadge />}
+        </span>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--fg-4)", letterSpacing: "0.04em" }}>{m.group}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>

@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 import {
   computeStandings,
   hasLiveFixture,
+  hottestFixture,
+  isHot,
   isUsableWorldCup,
   parseWorldCup,
   readableOn,
   slugify,
   statusOf,
   teamColor,
+  toUtcKickoff,
+  type WcFixture,
   type WorldCup,
 } from "@/lib/worldcup";
 
@@ -97,10 +101,10 @@ describe("parseWorldCup", () => {
     expect(f.away.score).toBe(0);
   });
 
-  it("treats a scheduled fixture's score as a kickoff label (no numeric score)", () => {
+  it("treats a scheduled fixture's score as a kickoff label, converted to UTC", () => {
     const f = wc.fixtures[2];
     expect(f.status).toBe("scheduled");
-    expect(f.kickoff).toBe("3 p.m. ET");
+    expect(f.kickoff).toBe("19:00 UTC"); // "3 p.m. ET" (EDT, UTC-4) → 19:00 UTC
     expect(f.home.score).toBeUndefined();
   });
 
@@ -152,5 +156,69 @@ describe("computeStandings", () => {
     // Group B (scheduled) and Group C (live) have no completed games → no group rows.
     expect(wc.standings.find((g) => g.group === "Group B")).toBeUndefined();
     expect(wc.standings.find((g) => g.group === "Group C")).toBeUndefined();
+  });
+});
+
+describe("toUtcKickoff", () => {
+  it("converts ET clock labels to UTC (tournament window is EDT, UTC-4)", () => {
+    expect(toUtcKickoff("3 p.m. ET")).toBe("19:00 UTC");
+    expect(toUtcKickoff("7:30 p.m. ET")).toBe("23:30 UTC");
+    expect(toUtcKickoff("11 p.m. ET")).toBe("03:00 UTC"); // wraps past midnight
+    expect(toUtcKickoff("12 p.m. ET")).toBe("16:00 UTC"); // noon
+    expect(toUtcKickoff("12 a.m. ET")).toBe("04:00 UTC"); // midnight
+  });
+  it("leaves non-ET labels untouched", () => {
+    expect(toUtcKickoff("TBD")).toBe("TBD");
+    expect(toUtcKickoff("MEX 2 - RSA 0")).toBe("MEX 2 - RSA 0");
+  });
+});
+
+describe("isHot / hottestFixture", () => {
+  const fx = (over: Partial<WcFixture>): WcFixture =>
+    ({ id: "x", date: "Jun 25", group: "Group A", venue: "", tag: "Group", status: "scheduled", home: {} as never, away: {} as never, ...over });
+
+  it("flags live matches and marquee-tagged ties as hot", () => {
+    expect(isHot(fx({ status: "live" }))).toBe(true);
+    expect(isHot(fx({ tag: "Marquee" }))).toBe(true);
+    expect(isHot(fx({ tag: "Opener" }))).toBe(true);
+    expect(isHot(fx({ status: "scheduled", tag: "Group" }))).toBe(false);
+  });
+
+  it("features a live match even after the feature day rolls forward", () => {
+    // generatedDate has advanced to Jun 27, but a Jun 26 match is still in play —
+    // the live match must win, not the next day's scheduled fixture.
+    const data = {
+      today: [fx({ id: "next", date: "Jun 27" })],
+      fixtures: [
+        fx({ id: "done", date: "Jun 26", status: "final" }),
+        fx({ id: "live", date: "Jun 26", status: "live" }),
+        fx({ id: "next", date: "Jun 27", status: "scheduled" }),
+      ],
+    } as unknown as WorldCup;
+    expect(hottestFixture(data)?.id).toBe("live");
+  });
+
+  it("features the nearest upcoming day's match when none are live", () => {
+    const data = {
+      today: [],
+      fixtures: [
+        fx({ id: "old", date: "Jun 26", status: "final" }),
+        fx({ id: "soon1", date: "Jun 27", status: "scheduled" }),
+        fx({ id: "soon2", date: "Jun 27", status: "scheduled" }),
+        fx({ id: "later", date: "Jun 28", status: "scheduled" }),
+      ],
+    } as unknown as WorldCup;
+    expect(hottestFixture(data)?.id).toBe("soon1"); // earliest scheduled day, feed order
+  });
+
+  it("prefers a marquee tie within the chosen day", () => {
+    const data = {
+      today: [],
+      fixtures: [
+        fx({ id: "plain", date: "Jun 27", status: "scheduled", tag: "Group L" }),
+        fx({ id: "marquee", date: "Jun 27", status: "scheduled", tag: "Marquee" }),
+      ],
+    } as unknown as WorldCup;
+    expect(hottestFixture(data)?.id).toBe("marquee");
   });
 });
