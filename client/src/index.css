@@ -244,6 +244,117 @@
     color: var(--signal-green);
   }
 
+  /* Match Center hero scoreboard. Keep this breakpoint in sync with
+     MATCH_SCOREBOARD_MOBILE_MAX_WIDTH_PX in wc-match-layout.ts. */
+  .wc-scoreboard-body {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px;
+  }
+  .wc-scoreboard-body--big {
+    gap: 18px;
+    padding: 26px 22px;
+  }
+  .wc-scoreboard-team {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .wc-scoreboard-team--away {
+    justify-content: flex-end;
+    text-align: right;
+  }
+  .wc-scoreboard-team-text {
+    min-width: 0;
+  }
+  .wc-scoreboard-name {
+    color: var(--fg-1);
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wc-scoreboard-body--big .wc-scoreboard-name {
+    font-size: 22px;
+  }
+  .wc-scoreboard-side-label {
+    color: var(--fg-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .wc-scoreboard-score {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 46px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .wc-scoreboard-body--big .wc-scoreboard-score {
+    gap: 14px;
+    font-size: 60px;
+  }
+
+  @media (max-width: 640px) {
+    .wc-route-badge {
+      display: none !important;
+    }
+    .wc-scoreboard-body,
+    .wc-scoreboard-body--big {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      padding: 16px;
+    }
+    .wc-scoreboard-team {
+      width: 100%;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.03);
+    }
+    .wc-scoreboard-team--home {
+      order: 1;
+    }
+    .wc-scoreboard-score {
+      order: 2;
+      width: 100%;
+      min-height: 44px;
+      gap: 10px;
+      font-size: 42px;
+      justify-self: center;
+    }
+    .wc-scoreboard-body--big .wc-scoreboard-score {
+      gap: 10px;
+      font-size: 44px;
+    }
+    .wc-scoreboard-team--away {
+      order: 3;
+    }
+    .wc-scoreboard-team-text {
+      flex: 1;
+    }
+    .wc-scoreboard-name,
+    .wc-scoreboard-body--big .wc-scoreboard-name {
+      font-size: 19px;
+      line-height: 1.2;
+      overflow: visible;
+      overflow-wrap: anywhere;
+      text-overflow: clip;
+      white-space: normal;
+    }
+  }
+
   /* Signal green glow utility */
   .signal-glow {
     box-shadow: 0 0 20px rgba(0,255,135,0.25), 0 0 40px rgba(0,255,135,0.1);

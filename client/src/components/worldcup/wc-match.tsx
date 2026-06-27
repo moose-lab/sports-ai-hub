@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Flame } from "lucide-react";
 import { isHot, type WcFixture, type WcMilestone, type WcStandingGroup, type WcTeam } from "@/lib/worldcup";
 import { Crest, Flag, StatusPill } from "@/components/worldcup/wc-primitives";
+import { SCOREBOARD_CLASS } from "@/components/worldcup/wc-match-layout";
 
 /* ── "HOT" label for standout fixtures (live or marquee ties) ── */
 function HotBadge() {
@@ -62,17 +63,17 @@ export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) 
           {m.group} · {m.venue}
         </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: big ? 18 : 12, padding: big ? "26px 22px" : "18px 16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+      <div className={`${SCOREBOARD_CLASS.body}${big ? ` ${SCOREBOARD_CLASS.bodyBig}` : ""}`}>
+        <div className={`${SCOREBOARD_CLASS.team} ${SCOREBOARD_CLASS.home}`}>
           <Crest team={m.home} size={big ? 52 : 42} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: big ? 22 : 17, color: "var(--fg-1)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <div className={SCOREBOARD_CLASS.teamText}>
+            <div className={SCOREBOARD_CLASS.name}>
               {m.home.name}
             </div>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-3)", marginTop: 2 }}>HOME</div>
+            <div className={SCOREBOARD_CLASS.sideLabel}>HOME</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: big ? 14 : 10, fontFamily: "var(--font-display)", fontWeight: 800, fontSize: scoreSize, lineHeight: 1, letterSpacing: "-0.03em" }}>
+        <div className={SCOREBOARD_CLASS.score}>
           {hasScore ? (
             <>
               <span style={{ color: lead >= 0 ? "var(--fg-1)" : "var(--fg-2)" }}>{m.home.score}</span>
@@ -85,12 +86,12 @@ export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) 
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, justifyContent: "flex-end", textAlign: "right" }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: big ? 22 : 17, color: "var(--fg-1)", lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div className={`${SCOREBOARD_CLASS.team} ${SCOREBOARD_CLASS.away}`}>
+          <div className={SCOREBOARD_CLASS.teamText}>
+            <div className={SCOREBOARD_CLASS.name}>
               {m.away.name}
             </div>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-3)", marginTop: 2 }}>AWAY</div>
+            <div className={SCOREBOARD_CLASS.sideLabel}>AWAY</div>
           </div>
           <Crest team={m.away} size={big ? 52 : 42} />
         </div>

@@ -65,7 +65,7 @@ function Header({ todayMatches }: { todayMatches: WcFixture[] }) {
             <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, color: "var(--fg-1)", letterSpacing: "-0.01em" }}>
               Sports<span style={{ color: "var(--signal-green)" }}>AI</span>Hub
             </span>
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--amber-alert)", border: "1px solid var(--amber-a25)", background: "var(--amber-a10)", padding: "2px 8px", borderRadius: 4, marginLeft: 4 }}>
+            <span className="wc-route-badge" style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--amber-alert)", border: "1px solid var(--amber-a25)", background: "var(--amber-a10)", padding: "2px 8px", borderRadius: 4, marginLeft: 4 }}>
               World Cup 26
             </span>
           </Link>
