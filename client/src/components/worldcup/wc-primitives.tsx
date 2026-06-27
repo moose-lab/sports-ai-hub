@@ -10,6 +10,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { flagIso, flagSrc } from "@/lib/flags";
+import { scrollAnchorIntoView } from "@/lib/scroll-anchor";
 import { readableOn, type WcFixture, type WcTeam } from "@/lib/worldcup";
 
 /* ── Country flag (falls back to the team color block if unmapped) ── */
@@ -247,10 +248,7 @@ export function TodayBar({ matches = [], variant }: { matches?: WcFixture[]; var
         href="#today"
         onClick={(e) => {
           e.preventDefault();
-          const el = document.getElementById("today");
-          if (el) {
-            window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110, behavior: "smooth" });
-          }
+          scrollAnchorIntoView("today");
         }}
         style={barStyle}
       >

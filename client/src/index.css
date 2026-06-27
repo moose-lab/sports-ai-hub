@@ -149,6 +149,7 @@
   /* Container */
   --container-max: 1280px;
   --container-pad: 24px;
+  --sticky-anchor-offset: 168px;
 
   /* Radii */
   --radius-pill: 9999px;
@@ -174,6 +175,7 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: var(--sticky-anchor-offset);
   }
 
   body {
@@ -226,6 +228,9 @@
     max-width: var(--container-max);
     margin-inline: auto;
     padding-inline: var(--container-pad);
+  }
+  .sa-anchor {
+    scroll-margin-top: var(--sticky-anchor-offset);
   }
   @media (min-width: 1024px) {
     .sa-container { padding-inline: 48px; }

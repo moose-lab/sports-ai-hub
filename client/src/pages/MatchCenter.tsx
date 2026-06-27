@@ -322,7 +322,7 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
       </section>
 
       {/* Fixtures */}
-      <section id="today" style={{ borderBottom: "1px solid var(--border)" }}>
+      <section id="today" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="sa-container" style={{ paddingTop: 48, paddingBottom: 64 }}>
           <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 24 }}>
             <div>

@@ -42,6 +42,7 @@ import {
 } from "@/components/brand";
 import { TodayBar } from "@/components/worldcup/wc-primitives";
 import { useWorldCup } from "@/hooks/useWorldCup";
+import { scrollAnchorIntoView } from "@/lib/scroll-anchor";
 import type { WcFixture } from "@/lib/worldcup";
 import {
   asset,
@@ -353,7 +354,7 @@ function Hero({
   setQuery: (v: string) => void;
 }) {
   return (
-    <section id="top" style={{ borderBottom: "1px solid var(--border)" }}>
+    <section id="top" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="sa-container" style={{ paddingTop: 72, paddingBottom: 56 }}>
         <div style={{ maxWidth: 760 }}>
           <div
@@ -599,7 +600,7 @@ function Directory({ query }: { query: string }) {
   const total = cats.reduce((n, c) => n + c.shown.length, 0);
 
   return (
-    <section id="directory" style={{ borderBottom: "1px solid var(--border)" }}>
+    <section id="directory" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="sa-container" style={{ paddingTop: 64, paddingBottom: 72 }}>
         <SectionHead
           eyebrow="The Collection"
@@ -684,6 +685,7 @@ function BuilderPath() {
   return (
     <section
       id="builder"
+      className="sa-anchor"
       style={{
         background: "var(--canvas-raised)",
         borderBottom: "1px solid var(--border)",
@@ -786,7 +788,7 @@ function Prototypes() {
   const p = prototypes[active];
 
   return (
-    <section id="prototypes" style={{ borderBottom: "1px solid var(--border)" }}>
+    <section id="prototypes" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="sa-container" style={{ paddingTop: 64, paddingBottom: 72 }}>
         <SectionHead
           eyebrow="Phase 6 · Runnable"
@@ -1075,15 +1077,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const wc = useWorldCup();
 
-  const onNav = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      window.scrollTo({
-        top: el.getBoundingClientRect().top + window.scrollY - 110,
-        behavior: "smooth",
-      });
-    }
-  };
+  const onNav = scrollAnchorIntoView;
 
   return (
     <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
