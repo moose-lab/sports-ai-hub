@@ -151,6 +151,22 @@ function refDateLabel(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 }
 
+/**
+ * Convert the feed's Eastern-time kickoff label ("11 p.m. ET") to UTC
+ * ("03:00 UTC"). The 2026 tournament window (Jun–Jul) is entirely Eastern
+ * Daylight Time, a fixed UTC-4 offset, so no DST branching is needed. Returns
+ * the input unchanged when it isn't an ET clock time.
+ */
+export function toUtcKickoff(label: string): string {
+  const m = label.match(/^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?\s*ET\s*$/i);
+  if (!m) return label;
+  let h = parseInt(m[1], 10) % 12;
+  if (m[3].toLowerCase() === "p") h += 12;
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  const utc = (h + 4) % 24; // ET (EDT) → UTC
+  return `${String(utc).padStart(2, "0")}:${String(min).padStart(2, "0")} UTC`;
+}
+
 /* ── Parsing ─────────────────────────────────────────────────── */
 
 interface RawFixture {
@@ -217,7 +233,7 @@ export function parseWorldCup(root: any): WorldCup {
       const aCode = codeFor(awayName);
       home = { name: homeName, code: hCode, color: teamColor(hCode) };
       away = { name: awayName, code: aCode, color: teamColor(aCode) };
-      kickoff = String(f.score || "").trim() || undefined; // scheduled: score holds the time
+      kickoff = toUtcKickoff(String(f.score || "").trim()) || undefined; // scheduled: score holds the time (shown in UTC)
     }
 
     return {
@@ -338,4 +354,44 @@ export async function fetchWorldCupSnapshot(signal?: AbortSignal): Promise<World
 /** True when any fixture is currently in play. */
 export function hasLiveFixture(data: WorldCup): boolean {
   return Array.isArray(data.fixtures) && data.fixtures.some((f) => f.status === "live");
+}
+
+/* ── Hottest fixture ─────────────────────────────────────────── */
+
+/** Marquee tags the feed uses for standout fixtures. */
+const HOT_TAGS = /\b(marquee|opener|final|knockout|semi|quarter|host)\b/i;
+
+/** A fixture worth a "HOT" label: in play now, or a marquee-tagged tie. */
+export function isHot(f: WcFixture): boolean {
+  return f.status === "live" || HOT_TAGS.test(f.tag || "");
+}
+
+/** Pick the marquee-tagged fixture from a set, else the first (feed order). */
+function pickMarquee(pool: WcFixture[]): WcFixture | undefined {
+  return pool.find((f) => HOT_TAGS.test(f.tag || "")) ?? pool[0];
+}
+
+/**
+ * The single fixture to feature by default. Driven by live status — NOT the
+ * snapshot's feature day — so a match still in play is never skipped when the
+ * generatedDate has already rolled to the next day:
+ *   1. a match in play right now (the live focus), else
+ *   2. the hottest fixture of the nearest upcoming day (临近的热门赛事), else
+ *   3. the most recent fixture once the tournament is over.
+ * The feed is chronological, so the first scheduled fixture is the soonest.
+ */
+export function hottestFixture(data: WorldCup): WcFixture | undefined {
+  const fixtures = data.fixtures;
+  if (fixtures.length === 0) return undefined;
+
+  const live = fixtures.filter((f) => f.status === "live");
+  if (live.length > 0) return pickMarquee(live);
+
+  const upcoming = fixtures.filter((f) => f.status === "scheduled");
+  if (upcoming.length > 0) {
+    const nextDay = upcoming[0].date; // earliest scheduled day
+    return pickMarquee(upcoming.filter((f) => f.date === nextDay));
+  }
+
+  return fixtures[fixtures.length - 1];
 }

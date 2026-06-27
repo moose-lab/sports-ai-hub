@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { asset, REPO } from "@/pages/home-data";
 import { useWorldCup } from "@/hooks/useWorldCup";
-import type { WcFixture, WcStatus, WorldCup } from "@/lib/worldcup";
+import { hottestFixture, type WcFixture, type WcStatus, type WorldCup } from "@/lib/worldcup";
 import { TodayBar } from "@/components/worldcup/wc-primitives";
 import { MatchCard, Milestones, Scoreboard, Standings } from "@/components/worldcup/wc-match";
 
@@ -180,7 +180,7 @@ function UpdatedAgo({ at }: { at: number | null }) {
 // ── Ready content ────────────────────────────────────────────────────────────
 function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedAt: number | null; isLive: boolean }) {
   const fixtures = data.fixtures;
-  const defaultFixture = data.today[0] ?? fixtures[0];
+  const defaultFixture = hottestFixture(data) ?? fixtures[0];
   const [selId, setSelId] = useState(defaultFixture?.id);
   const [filter, setFilter] = useState("All");
 
