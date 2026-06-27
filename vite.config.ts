@@ -224,6 +224,15 @@ export default defineConfig({
     port: 3000,
     strictPort: false, // Will find next available port if 3000 is busy
     host: true,
+    // Plain `vite dev` has no Pages Function, so proxy /api/worldcup to the raw
+    // feed (no ESPN overlay locally). For the real Function, use `wrangler pages dev`.
+    proxy: {
+      "/api/worldcup": {
+        target: "https://raw.githubusercontent.com",
+        changeOrigin: true,
+        rewrite: () => "/moose-lab/awesome-sports-ai/main/visualizations/source-data.json",
+      },
+    },
     allowedHosts: [
       ".manuspre.computer",
       ".manus.computer",

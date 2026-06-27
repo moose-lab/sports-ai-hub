@@ -3,11 +3,13 @@
  *
  * Source of truth: the `awesome-sports-ai` repo runs a scheduled job
  * (`sync-fifa-world-cup.mjs`, every ~5 min during the tournament window) that
- * commits a snapshot to `visualizations/source-data.json`. We fetch that file
- * at runtime (it is served with `access-control-allow-origin: *`), so when the
- * repo syncs new match data the website reflects it without a redeploy. Note
- * the raw file is CDN-cached with a ~5 min edge TTL, which is the true
- * freshness floor regardless of how often we poll.
+ * commits a snapshot to `visualizations/source-data.json`.
+ *
+ * We no longer fetch that raw file directly (its ~5 min CDN edge TTL stacked on
+ * the ~5 min cron made the live data lag 10+ min). Instead we hit the same-origin
+ * `/api/worldcup` Pages Function, which overlays ESPN's ~6-second-fresh scores
+ * onto the snapshot at request time. The shape is identical, so the parser below
+ * is unchanged.
  *
  * The feed gives fixtures with a dual-purpose `score` field: a result like
  * "MEX 2 - RSA 0" (which also encodes the 3-letter team codes) when Final,
@@ -16,8 +18,13 @@
  * group standings from the final results.
  */
 
-export const WC_SOURCE_URL =
-  "https://raw.githubusercontent.com/moose-lab/awesome-sports-ai/main/visualizations/source-data.json";
+/**
+ * Same-origin Cloudflare Pages Function (`functions/api/worldcup.ts`) that
+ * overlays ESPN's live scores onto the GitHub snapshot — far fresher than the
+ * raw feed's 5-min CDN. Override with `VITE_WC_SOURCE` (e.g. point straight at
+ * raw in environments without the Function).
+ */
+export const WC_SOURCE_URL = import.meta.env?.VITE_WC_SOURCE ?? "/api/worldcup";
 
 export type WcStatus = "final" | "scheduled" | "live";
 

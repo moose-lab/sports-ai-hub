@@ -18,12 +18,12 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchWorldCupSnapshot, hasLiveFixture, type WorldCup } from "@/lib/worldcup";
 
-// raw.githubusercontent.com sits behind a CDN with a ~5min edge TTL that
-// `cache: "no-store"` cannot bypass, so the true data-freshness floor is ~5min
-// (matching the upstream cron). These intervals bound how fast we *detect* a
-// newly edge-cached snapshot, not how fresh the underlying data is.
+// We now poll the same-origin `/api/worldcup` Pages Function, which overlays
+// ESPN's ~6s-fresh live scores and edge-caches ~15s. The data genuinely changes
+// at that cadence now (unlike the old raw feed's ~5min floor), so a tighter live
+// interval actually surfaces fresher scores; each poll is a cheap edge hit.
 const BASE_INTERVAL_MS = 60_000;
-const LIVE_INTERVAL_MS = 25_000;
+const LIVE_INTERVAL_MS = 12_000;
 const RETRY_BASE_MS = 1_000; // first retry delay; doubles each consecutive failure
 const RETRY_MAX_MS = 30_000; // backoff cap
 const FAILS_BEFORE_ERROR = 3; // keep first load in `loading` through this many fast retries
