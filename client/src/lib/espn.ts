@@ -22,7 +22,8 @@ const easternTimeZone = "America/New_York";
 export interface EspnFixture {
   date: string;
   match: string;
-  group: string;
+  round: string;
+  group?: string;
   venue: string;
   tag: string;
   status: string;
@@ -90,10 +91,30 @@ const venueCity = (competition: any): string => {
   return city.split(",")[0] || competition.venue?.fullName || "TBD";
 };
 
-const groupFromNote = (competition: any): string => {
+const openingPhaseRound = "Opening phase";
+
+const isLegacyGroupLabel = (value: unknown): boolean =>
+  /^Group (?:[A-L]|stage)$/i.test(String(value ?? "").trim());
+
+const normalizeRoundLabel = (value: unknown): string => {
+  const label = String(value ?? "").replace(/-/g, " ").replace(/\s+/g, " ").trim();
+  const lower = label.toLowerCase();
+
+  if (!label || isLegacyGroupLabel(label)) return openingPhaseRound;
+  if (lower === "round of 32") return "Round of 32";
+  if (lower === "round of 16") return "Round of 16";
+  if (lower === "quarterfinal" || lower === "quarterfinals") return "Quarterfinals";
+  if (lower === "semifinal" || lower === "semifinals") return "Semifinals";
+  if (lower === "third place match") return "Third-place match";
+  if (lower === "final") return "Final";
+
+  return label;
+};
+
+const roundFromNote = (competition: any): string => {
   const note = competition.altGameNote ?? "";
-  const match = note.match(/Group [A-L]/);
-  return match?.[0] ?? "Group stage";
+  const match = note.match(/Round of 32|Round of 16|Quarterfinals?|Semi-?finals?|Third-?place match|Final/i);
+  return normalizeRoundLabel(match?.[0]);
 };
 
 const statusFromCompetition = (competition: any): string => {
@@ -171,14 +192,14 @@ export const normalizeScoreboardEvents = (scoreboards: any[]): EspnFixture[] =>
 
       const eventDate = new Date(event.date);
       const status = statusFromCompetition(competition);
-      const group = groupFromNote(competition);
+      const round = roundFromNote(competition);
 
       return {
         date: formatFixtureDate(eventDate),
         match: `${normalizeTeamName(home.team.displayName)} v ${normalizeTeamName(away.team.displayName)}`,
-        group,
+        round,
         venue: competition.venue?.fullName ?? "TBD",
-        tag: group,
+        tag: round,
         status,
         score: scoreForFixture(status, home, away, eventDate),
         insight: status === "Scheduled" ? venueCity(competition) : status === "Live" ? "Live window" : "Full time",
@@ -189,24 +210,54 @@ export const normalizeScoreboardEvents = (scoreboards: any[]): EspnFixture[] =>
     .sort((a: any, b: any) => a.sortKey.localeCompare(b.sortKey))
     .map(publicFixture);
 
+const normalizeFixtureInsight = (insight: unknown): unknown =>
+  /^Group [A-L] early edge$/i.test(String(insight ?? "")) ? "Opening phase result" : insight;
+
+const fixtureTag = (tag: unknown, round: string): string => {
+  if (!tag || isLegacyGroupLabel(tag)) return round;
+  return String(tag);
+};
+
+const normalizeFixtureShape = (fixture: any): EspnFixture => {
+  const { group, round: fixtureRound, date, match, venue, tag, status, score, insight, ...rest } = fixture;
+  const round = normalizeRoundLabel(fixtureRound ?? group);
+
+  return {
+    date,
+    match,
+    round,
+    venue,
+    tag: fixtureTag(tag, round),
+    status,
+    score,
+    insight: normalizeFixtureInsight(insight),
+    ...rest,
+  };
+};
+
 const mergeFixtures = (existingFixtures: any[], incomingFixtures: EspnFixture[]): EspnFixture[] => {
   const fixturesByKey = new Map<string, any>();
 
   existingFixtures.forEach((fixture, index) => {
-    fixturesByKey.set(fixtureKey(fixture), {
-      ...fixture,
+    const normalizedFixture = normalizeFixtureShape(fixture);
+    fixturesByKey.set(fixtureKey(normalizedFixture), {
+      ...normalizedFixture,
       sortKey: sortableDate(fixture),
       originalIndex: index,
     });
   });
 
   incomingFixtures.forEach((fixture) => {
-    const existing = fixturesByKey.get(fixtureKey(fixture));
-    fixturesByKey.set(fixtureKey(fixture), {
+    const normalizedFixture = normalizeFixtureShape(fixture);
+    const existing = fixturesByKey.get(fixtureKey(normalizedFixture));
+    fixturesByKey.set(fixtureKey(normalizedFixture), {
       ...existing,
-      ...fixture,
-      tag: existing?.tag && existing.tag !== existing.group ? existing.tag : fixture.tag,
-      sortKey: sortableDate(fixture),
+      ...normalizedFixture,
+      tag:
+        existing?.tag && existing.tag !== existing.round && !isLegacyGroupLabel(existing.tag)
+          ? existing.tag
+          : normalizedFixture.tag,
+      sortKey: sortableDate(normalizedFixture),
       originalIndex: existing?.originalIndex ?? existingFixtures.length,
     });
   });
@@ -216,7 +267,12 @@ const mergeFixtures = (existingFixtures: any[], incomingFixtures: EspnFixture[])
     .map(({ originalIndex, ...fixture }) => publicFixture(fixture));
 };
 
-const buildStats = (fixtures: EspnFixture[]) => {
+const usesKnockoutStats = (stats: unknown): boolean =>
+  Array.isArray(stats) && stats.some((stat: any) => stat.label === "Knockout field");
+
+const buildStats = (existingStats: unknown, fixtures: EspnFixture[]) => {
+  if (usesKnockoutStats(existingStats)) return existingStats;
+
   const finalCount = fixtures.filter((f) => f.status === "Final").length;
   const liveFixture = fixtures.find((f) => f.status === "Live");
   const scheduledCount = fixtures.filter((f) => f.status === "Scheduled").length;
@@ -241,8 +297,13 @@ const buildFixtureSummary = (existingSummary: any, fixtures: EspnFixture[]) => {
       : `${plural(scheduledCount, "fixture")} ${beVerb(scheduledCount)} scheduled next`;
   return {
     ...existingSummary,
-    label: existingSummary?.label ?? "Group-stage live snapshot",
-    window: firstDate === lastDate ? firstDate : `${firstDate}-${lastDate.replace(/^[A-Z][a-z]{2} /, "")}`,
+    label: existingSummary?.label ?? "Knockout-stage tool contract",
+    window:
+      existingSummary?.label === "Knockout-stage tool contract" && existingSummary?.window
+        ? existingSummary.window
+        : firstDate === lastDate
+          ? firstDate
+          : `${firstDate}-${lastDate.replace(/^[A-Z][a-z]{2} /, "")}`,
     detail: `${finalPhrase}, ${liveSummary(liveFixture)}, and ${scheduledPhrase}.`,
   };
 };
@@ -257,7 +318,10 @@ const buildUpdateStream = (existingStream: any, fixtures: EspnFixture[], fixture
   if (!existingStream) return undefined;
   return {
     ...existingStream,
-    currentWindow: fixtureSummary.window,
+    currentWindow:
+      existingStream.label === "Knockout update stream" && existingStream.currentWindow
+        ? existingStream.currentWindow
+        : fixtureSummary.window,
     lastVerifiedAt: formatGeneratedDate(now),
     status: streamStatus(fixtures),
   };
@@ -284,7 +348,7 @@ export const syncSourceData = (
   data.fifaWorldCup = {
     ...fifaWorldCup,
     updated: `Updated ${formatLongDate(now)}`,
-    stats: buildStats(fixtures),
+    stats: buildStats(fifaWorldCup.stats, fixtures),
     fixtureSummary,
     ...(updateStream ? { updateStream } : {}),
     confirmedFixtures: fixtures,

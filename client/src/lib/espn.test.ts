@@ -61,6 +61,8 @@ describe("normalizeScoreboardEvents", () => {
     const fixtures = normalizeScoreboardEvents([scoreboard]);
     expect(fixtures.map((f) => f.match)).toEqual(["Germany v Curacao", "Sweden v Tunisia", "Spain v Cabo Verde"]);
     expect(fixtures.map((f) => f.status)).toEqual(["Final", "Live", "Scheduled"]);
+    expect(fixtures.map((f: any) => f.round)).toEqual(["Opening phase", "Opening phase", "Opening phase"]);
+    expect(fixtures.every((f: any) => !("group" in f))).toBe(true);
     expect(fixtures[0].score).toBe("GER 7 - CUW 1");
     expect(fixtures[1].date).toBe("Jun 14");
     expect(fixtures[1].score).toBe("SWE 2 - TUN 0");
@@ -93,8 +95,78 @@ describe("syncSourceData", () => {
     // Skeleton had it "Scheduled / 1 p.m. ET"; ESPN says it finished 7-1.
     expect(germany.status).toBe("Final");
     expect(germany.score).toBe("GER 7 - CUW 1");
+    expect(germany.round).toBe("Opening phase");
+    expect("group" in germany).toBe(false);
     // A live match ESPN reports but the skeleton lacks gets added.
     expect(data.fifaWorldCup.confirmedFixtures.some((f: any) => f.match === "Sweden v Tunisia")).toBe(true);
+  });
+
+  it("preserves knockout metadata while overlaying round-first fixtures", () => {
+    const knockoutStats = [
+      { label: "Knockout field", value: "32 teams" },
+      { label: "Format", value: "Single elimination" },
+      { label: "Next stage", value: "Round of 32" },
+      { label: "Tournament field", value: "48 teams" },
+    ];
+    const knockoutSource = {
+      ...sourceData,
+      fifaWorldCup: {
+        ...sourceData.fifaWorldCup,
+        stats: knockoutStats,
+        fixtureSummary: {
+          label: "Knockout-stage tool contract",
+          window: "Round of 32",
+          detail: "Old detail",
+        },
+        updateStream: {
+          ...sourceData.fifaWorldCup.updateStream,
+          label: "Knockout update stream",
+          currentWindow: "Round of 32",
+        },
+        confirmedFixtures: [
+          {
+            date: "Jun 29",
+            match: "Brazil v Japan",
+            round: "Round of 32",
+            venue: "New York New Jersey Stadium",
+            tag: "Round of 32",
+            status: "Scheduled",
+            score: "12 p.m. ET",
+            insight: "East Rutherford",
+          },
+        ],
+      },
+    };
+    const knockoutScoreboard = {
+      events: [
+        event({
+          id: "760501",
+          date: "2026-06-29T16:00:00Z",
+          homeName: "Brazil",
+          homeAbbr: "BRA",
+          homeScore: "2",
+          awayName: "Japan",
+          awayAbbr: "JPN",
+          awayScore: "1",
+          state: "post",
+          completed: true,
+          shortDetail: "FT",
+          venue: "New York New Jersey Stadium",
+          city: "East Rutherford",
+          group: "Round of 32",
+        }),
+      ],
+    };
+
+    const { data } = syncSourceData(knockoutSource, [knockoutScoreboard], { now: new Date("2026-06-30T05:00:00Z") });
+    const brazil = data.fifaWorldCup.confirmedFixtures.find((f: any) => f.match === "Brazil v Japan");
+
+    expect(data.fifaWorldCup.stats).toEqual(knockoutStats);
+    expect(data.fifaWorldCup.fixtureSummary.window).toBe("Round of 32");
+    expect(data.fifaWorldCup.updateStream.currentWindow).toBe("Round of 32");
+    expect(brazil.round).toBe("Round of 32");
+    expect(brazil.tag).toBe("Round of 32");
+    expect("group" in brazil).toBe(false);
   });
 
   it("describes away-leading and tied live matches", () => {

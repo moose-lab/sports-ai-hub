@@ -129,7 +129,7 @@ export function MatchChip({ m }: { m: WcFixture }) {
   const code = (text: string) => (
     <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12.5, color: "var(--fg-1)" }}>{text}</span>
   );
-  const tail = inplay ? "LIVE" : m.status === "final" ? "FT" : m.kickoff ?? m.date;
+  const tail = inplay ? "IN PLAY" : m.status === "final" ? "FT" : m.kickoff ?? m.date;
   return (
     <span
       style={{

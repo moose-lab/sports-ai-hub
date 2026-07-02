@@ -149,7 +149,7 @@ const FILTER_DEFS: { label: string; status: WcStatus | null }[] = [
   { label: "All", status: null },
   { label: "Scheduled", status: "scheduled" },
   { label: "Final", status: "final" },
-  { label: "Live", status: "live" },
+  { label: "In play", status: "live" },
 ];
 
 /**
@@ -221,6 +221,8 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
 
   const statusLabel =
     selected.status === "final" ? "Full time" : selected.status === "live" ? "In play" : "Scheduled";
+  const stageValue = selected.round || selected.group || "World Cup";
+  const stageKey = /^Group [A-L]$/i.test(stageValue) ? "Group" : "Round";
 
   return (
     <>
@@ -243,7 +245,7 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
             )}
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-4)", padding: "3px 9px", border: "1px solid var(--border)", borderRadius: "var(--radius-pill)" }}>
               {isLive ? (
-                <span className="pulse-dot" style={{ width: 7, height: 7, background: "var(--signal-green)" }} />
+                <span className="pulse-dot" style={{ width: 7, height: 7, background: "var(--amber-alert)" }} />
               ) : (
                 <RefreshCw size={12} style={{ color: "var(--amber-alert)" }} />
               )}{" "}
@@ -274,7 +276,7 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {(
                   [
-                    ["Group", selected.group],
+                    [stageKey, stageValue],
                     ["Venue", selected.venue],
                     ["Date", selected.date],
                     [selected.status === "scheduled" ? "Kickoff" : "Status", selected.status === "scheduled" ? selected.kickoff ?? "TBD" : statusLabel],

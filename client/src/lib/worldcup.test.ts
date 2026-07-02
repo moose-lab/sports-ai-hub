@@ -126,6 +126,40 @@ describe("parseWorldCup", () => {
     expect(wc.today.map((f) => f.home.code)).toEqual(["GER"]);
   });
 
+  it("keeps cross-day live knockout matches in the homepage carousel", () => {
+    const data = parseWorldCup({
+      generatedDate: "2026-06-30",
+      fifaWorldCup: {
+        confirmedFixtures: [
+          { date: "Jun 29", match: "Netherlands v Morocco", round: "Round of 32", venue: "Estadio BBVA", tag: "Round of 32", status: "Live", score: "NED 1 - MAR 1", insight: "Live window" },
+          { date: "Jun 30", match: "France v Sweden", round: "Round of 32", venue: "MetLife Stadium", tag: "Round of 32", status: "Scheduled", score: "5 p.m. ET", insight: "East Rutherford" },
+        ],
+      },
+    });
+
+    expect(data.todayLabel).toBe("Jun 30");
+    expect(data.today.map((f) => f.id)).toEqual([
+      "jun-29-netherlands-v-morocco",
+      "jun-30-france-v-sweden",
+    ]);
+    expect(data.today[0].round).toBe("Round of 32");
+    expect(data.today[0].group).toBe("");
+  });
+
+  it("falls back to the latest result day before upcoming fixtures when today is dark", () => {
+    const data = parseWorldCup({
+      generatedDate: "2026-06-30",
+      fifaWorldCup: {
+        confirmedFixtures: [
+          { date: "Jun 28", match: "South Africa v Canada", round: "Round of 32", venue: "BC Place", tag: "Round of 32", status: "Final", score: "RSA 0 - CAN 1", insight: "Full time" },
+          { date: "Jul 1", match: "England v Congo DR", round: "Round of 32", venue: "Atlanta Stadium", tag: "Round of 32", status: "Scheduled", score: "12 p.m. ET", insight: "Atlanta" },
+        ],
+      },
+    });
+
+    expect(data.today.map((f) => f.id)).toEqual(["jun-28-south-africa-v-canada"]);
+  });
+
   it("degrades safely on an empty payload", () => {
     expect(parseWorldCup({}).fixtures).toHaveLength(0);
     expect(parseWorldCup({ fifaWorldCup: {} }).fixtures).toHaveLength(0);

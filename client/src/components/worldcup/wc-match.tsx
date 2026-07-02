@@ -13,6 +13,8 @@ import { isHot, type WcFixture, type WcMilestone, type WcStandingGroup, type WcT
 import { Crest, Flag, StatusPill } from "@/components/worldcup/wc-primitives";
 import { SCOREBOARD_CLASS } from "@/components/worldcup/wc-match-layout";
 
+const stageLabel = (m: WcFixture) => m.round || m.group || "World Cup";
+
 /* ── "HOT" label for standout fixtures (live or marquee ties) ── */
 function HotBadge() {
   return (
@@ -60,7 +62,7 @@ export function Scoreboard({ m, big = false }: { m: WcFixture; big?: boolean }) 
           {isHot(m) && <HotBadge />}
         </span>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--fg-3)", letterSpacing: "0.04em" }}>
-          {m.group} · {m.venue}
+          {stageLabel(m)} · {m.venue}
         </span>
       </div>
       <div className={`${SCOREBOARD_CLASS.body}${big ? ` ${SCOREBOARD_CLASS.bodyBig}` : ""}`}>
@@ -151,7 +153,7 @@ export function MatchCard({ m, onClick, active = false }: { m: WcFixture; onClic
           <StatusPill m={m} />
           {isHot(m) && <HotBadge />}
         </span>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--fg-4)", letterSpacing: "0.04em" }}>{m.group}</span>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--fg-4)", letterSpacing: "0.04em" }}>{stageLabel(m)}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {row(m.home, hLead)}

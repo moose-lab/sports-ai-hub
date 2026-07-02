@@ -38,7 +38,10 @@ export interface WcTeam {
 export interface WcFixture {
   id: string;
   date: string; // "Jun 24"
+  /** Group table bucket. Empty for knockout fixtures. */
   group: string; // "Group A"
+  /** User-facing phase/round label, e.g. "Group A" or "Round of 32". */
+  round: string;
   venue: string;
   tag: string;
   status: WcStatus;
@@ -94,7 +97,7 @@ export interface WorldCup {
   stats: WcStat[];
   summary: { label: string; window: string; detail: string };
   fixtures: WcFixture[];
-  today: WcFixture[]; // fixtures on the feature day (drives the carousel)
+  today: WcFixture[]; // live-first match window that drives the homepage carousel
   standings: WcStandingGroup[];
   milestones: WcMilestone[];
 }
@@ -179,12 +182,37 @@ export function toUtcKickoff(label: string): string {
 interface RawFixture {
   date: string;
   match: string;
-  group: string;
+  group?: string;
+  round?: string;
   venue: string;
   tag: string;
   status: string;
   score: string;
   insight: string;
+}
+
+const GROUP_LABEL_RE = /^Group [A-L]$/i;
+
+function groupLabelOf(f: RawFixture): string {
+  const group = String(f.group || "").trim();
+  return GROUP_LABEL_RE.test(group) ? group : "";
+}
+
+function roundLabelOf(f: RawFixture, group: string): string {
+  return String(f.round || group || f.tag || "").trim();
+}
+
+function uniqueFixtures(pools: WcFixture[][]): WcFixture[] {
+  const seen = new Set<string>();
+  const out: WcFixture[] = [];
+  for (const pool of pools) {
+    for (const fixture of pool) {
+      if (seen.has(fixture.id)) continue;
+      seen.add(fixture.id);
+      out.push(fixture);
+    }
+  }
+  return out;
 }
 
 /** Parse the raw `source-data.json` object into the typed World Cup model. */
@@ -221,6 +249,8 @@ export function parseWorldCup(root: any): WorldCup {
   // Pass 2 — build typed fixtures.
   const fixtures: WcFixture[] = rawFixtures.map((f, i) => {
     const status = statusOf(f.status);
+    const group = groupLabelOf(f);
+    const round = roundLabelOf(f, group);
     const names = String(f.match || "").split(/\s+v\s+/i);
     const homeName = (names[0] || "Home").trim();
     const awayName = (names[1] || "Away").trim();
@@ -248,7 +278,8 @@ export function parseWorldCup(root: any): WorldCup {
       // and silently move the user's Match Center selection.
       id: slugify(`${f.date} ${f.match}`) || `fx${i}`,
       date: f.date,
-      group: f.group,
+      group,
+      round,
       venue: f.venue,
       tag: f.tag,
       status,
@@ -261,12 +292,14 @@ export function parseWorldCup(root: any): WorldCup {
 
   const refDate: string = String(root?.generatedDate || "");
   const todayLabel = refDateLabel(refDate);
-  let today = fixtures.filter((f) => f.date === todayLabel);
+  const liveFixtures = fixtures.filter((f) => f.status === "live");
+  const featureDayFixtures = fixtures.filter((f) => f.date === todayLabel);
+  let today = uniqueFixtures([liveFixtures, featureDayFixtures]);
   if (today.length === 0) {
-    // Fallback so the carousel is never empty: prefer the next scheduled day,
-    // else the most recent day with fixtures.
-    const sched = fixtures.filter((f) => f.status !== "final");
-    const pickDay = (sched[0] ?? fixtures[fixtures.length - 1])?.date;
+    // Fallback so the carousel is never empty: on dark days, prefer the latest
+    // result day before falling forward to the next scheduled fixtures.
+    const latestResultDay = [...fixtures].reverse().find((f) => f.status === "final")?.date;
+    const pickDay = latestResultDay ?? fixtures.find((f) => f.status !== "final")?.date ?? fixtures[fixtures.length - 1]?.date;
     today = fixtures.filter((f) => f.date === pickDay);
   }
 
