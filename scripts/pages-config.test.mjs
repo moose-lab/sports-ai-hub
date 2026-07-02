@@ -10,7 +10,8 @@ const cloudflareConfig = readFileSync(
 );
 
 test("Cloudflare Pages deployment uses the canonical project URL and root asset config", () => {
-  assert.equal(packageJson.scripts["build:cloudflare"], "vite build --config vite.config.cloudflare.ts");
+  assert.match(packageJson.scripts["build:cloudflare"], /node scripts\/sync-catalog\.mjs/);
+  assert.match(packageJson.scripts["build:cloudflare"], /vite build --config vite\.config\.cloudflare\.ts$/);
   assert.match(cloudflareConfig, /base:\s*["']\/["']/);
   assert.equal(existsSync(workflowPath), true);
 

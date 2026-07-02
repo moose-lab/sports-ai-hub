@@ -21,6 +21,10 @@ const badgeVariants = cva(
           "rounded-full border-[var(--green-a30)] bg-[var(--green-a12)] text-[var(--signal-green)] font-mono text-[11px] tracking-wide",
         slate:
           "rounded-full border-transparent bg-[var(--canvas-inset)] text-[var(--fg-2)] font-mono text-[11px] tracking-wide",
+        amber:
+          "rounded-full border-[var(--amber-a25)] bg-[var(--amber-a10)] text-[var(--amber-alert)] font-mono text-[11px] tracking-wide",
+        solid:
+          "rounded-full border-transparent bg-[var(--signal-green)] text-[var(--canvas)] font-mono text-[11px] tracking-wide font-semibold",
       },
     },
     defaultVariants: {
