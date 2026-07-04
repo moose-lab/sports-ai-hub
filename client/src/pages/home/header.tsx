@@ -235,6 +235,9 @@ export function Header({
           </a>
 
           <nav style={{ display: "flex", alignItems: "center", gap: 22 }}>
+            <span className="hidden md:inline-flex">
+              <ExploreMenu onNav={onNav} onJumpCategory={onJumpCategory} />
+            </span>
             <Link
               href="/hyrox"
               className="nav-link hidden md:inline-flex"
@@ -250,9 +253,6 @@ export function Header({
               <span className="pulse-dot" style={{ width: 6, height: 6 }} />
               HYROX Zone
             </Link>
-            <span className="hidden md:inline-flex">
-              <ExploreMenu onNav={onNav} onJumpCategory={onJumpCategory} />
-            </span>
             <Link
               href="/match-center"
               className="hidden md:inline-flex"
