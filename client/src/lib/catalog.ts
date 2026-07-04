@@ -40,6 +40,44 @@ export interface CatalogRecipe {
   toolIds: string[];
 }
 
+export interface CatalogSceneStarterBuild {
+  input: string;
+  output: string;
+  prototypeDirection: string;
+}
+
+export interface CatalogSceneSection {
+  id: string;
+  title: string;
+  titleZh?: string;
+  problem: string;
+  toolIds: string[];
+  crossDomainToolIds?: string[];
+  starterBuild: CatalogSceneStarterBuild;
+}
+
+export interface CatalogSceneGap {
+  id: string;
+  title: string;
+  description: string;
+}
+
+/** One sport-scene zone (e.g. HYROX) — the structured mirror of docs/sports/<slug>.md upstream. */
+export interface CatalogScene {
+  id: string;
+  slug: string;
+  sport: string;
+  route: string;
+  title: string;
+  tagline: string;
+  guidePath: string;
+  catalogTags: string[];
+  firstToolId: string;
+  liveAppUrl?: string;
+  sections: CatalogSceneSection[];
+  gaps: CatalogSceneGap[];
+}
+
 interface Catalog {
   categories: CatalogCategory[];
   sportTags: string[];
@@ -47,9 +85,16 @@ interface Catalog {
   openness: string[];
   tools: CatalogTool[];
   recipes: CatalogRecipe[];
+  /** Optional: older snapshots predate the scenes collection. */
+  scenes?: CatalogScene[];
 }
 
 export const catalog = rawCatalog as Catalog;
+
+/** Defensive: a stale snapshot without `scenes` must not break the build. */
+export const scenes: CatalogScene[] = catalog.scenes ?? [];
+
+export const sceneBySlug = (slug: string): CatalogScene | undefined => scenes.find((s) => s.slug === slug);
 
 export const toolById = (id: string): CatalogTool | undefined => catalog.tools.find((t) => t.id === id);
 

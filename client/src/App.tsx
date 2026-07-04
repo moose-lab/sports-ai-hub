@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MatchCenter from "./pages/MatchCenter";
+import SportScene from "./pages/SportScene";
 
 // Resolve the deploy base path (Cloudflare Pages: "/", GitHub Pages:
 // "/sports-ai-hub/") into a wouter base with no trailing slash.
@@ -17,6 +18,7 @@ function Router() {
       <Switch>
         <Route path={"/"} component={Home} />
         <Route path={"/match-center"} component={MatchCenter} />
+        <Route path={"/sports/:slug"} component={SportScene} />
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

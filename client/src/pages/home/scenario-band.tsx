@@ -3,7 +3,9 @@
  * One per Popular Scenario (World Cup, HYROX), per the design's World Cup
  * feature-band screenshot. Data-driven so both scenarios share one layout.
  */
-import { Trophy } from "lucide-react";
+import { ArrowRight, Trophy } from "lucide-react";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import { Tag } from "@/components/brand";
 import { toolById } from "@/lib/catalog";
 import type { ScenarioBand as ScenarioBandData } from "@/pages/home/scenario-bands-data";
@@ -88,7 +90,20 @@ export function ScenarioBand({ band }: { band: ScenarioBandData }) {
             })}
           </div>
 
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <PrimaryLink href={band.ctaHref}>{band.ctaLabel}</PrimaryLink>
+          {band.secondaryCtaRoute && band.secondaryCtaLabel && (
+            <Button
+              asChild
+              variant="outline"
+              className="border-[var(--border)] bg-transparent text-[var(--fg-2)] hover:bg-transparent hover:text-[var(--signal-green)] hover:border-[var(--green-a40)] dark:bg-transparent dark:border-[var(--border)] dark:hover:bg-transparent"
+            >
+              <Link href={band.secondaryCtaRoute}>
+                {band.secondaryCtaLabel} <ArrowRight size={14} />
+              </Link>
+            </Button>
+          )}
+        </div>
         </div>
       </div>
     </section>

@@ -36,15 +36,7 @@ const stats = [
   { value: String(prototypes.length), label: "Runnable Prototypes" },
 ];
 
-export function Hero({
-  query,
-  setQuery,
-  onNav,
-}: {
-  query: string;
-  setQuery: (v: string) => void;
-  onNav: (id: string) => void;
-}) {
+export function Hero({ query, setQuery }: { query: string; setQuery: (v: string) => void }) {
   return (
     <section id="top" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
       <div className="sa-container home-hero-container">
@@ -58,9 +50,9 @@ export function Hero({
             <Link href="/match-center" style={pillStyle}>
               <Trophy size={13} /> World Cup 2026 <ArrowRight size={13} /> Match Center
             </Link>
-            <button type="button" onClick={() => onNav("hyrox-band")} style={pillStyle}>
-              <Dumbbell size={13} /> HYROX <ArrowRight size={13} /> Race-day toolkit
-            </button>
+            <Link href="/sports/hyrox" style={pillStyle}>
+              <Dumbbell size={13} /> HYROX <ArrowRight size={13} /> HYROX Zone
+            </Link>
           </div>
 
           <h1

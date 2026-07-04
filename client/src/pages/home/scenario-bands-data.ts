@@ -18,6 +18,9 @@ export interface ScenarioBand {
   toolIds: string[];
   ctaLabel: string;
   ctaHref: string;
+  /** Optional in-app secondary CTA (e.g. the scene's /sports/<slug> zone). */
+  secondaryCtaLabel?: string;
+  secondaryCtaRoute?: string;
   backgroundImage?: string;
 }
 
@@ -54,5 +57,7 @@ export const scenarioBands: ScenarioBand[] = [
     toolIds: ["hyrox-gym-finder", "athlete-load-monitor", "acute-chronic-workload-ratio", "coroebus", "openpose"],
     ctaLabel: "Try HYROX Gym Finder",
     ctaHref: "https://moose-lab.github.io/hyrox-gym-finder/",
+    secondaryCtaLabel: "Open the HYROX Zone",
+    secondaryCtaRoute: "/sports/hyrox",
   },
 ];

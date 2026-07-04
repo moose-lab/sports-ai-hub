@@ -9,6 +9,8 @@ import {
   OPENNESS_HINT,
   OPENNESS_LABEL,
   recipesForTool,
+  sceneBySlug,
+  scenes,
   toolById,
   toolsByCategory,
 } from "@/lib/catalog";
@@ -65,6 +67,37 @@ describe("catalog", () => {
       expect(OPENNESS_LABEL[id]).toBeTruthy();
       expect(OPENNESS_HINT[id]).toBeTruthy();
       expect(OPENNESS_BADGE_VARIANT[id]).toBeTruthy();
+    }
+  });
+
+  it("resolves sport scenes by slug with route/slug consistency", () => {
+    expect(scenes.length).toBeGreaterThan(0);
+    const hyrox = sceneBySlug("hyrox");
+    expect(hyrox).toBeDefined();
+    expect(hyrox!.route).toBe("/sports/hyrox");
+    expect(sceneBySlug("does-not-exist")).toBeUndefined();
+    for (const scene of scenes) {
+      expect(scene.route).toBe(`/sports/${scene.slug}`);
+    }
+  });
+
+  it("resolves every scene tool reference against the tools list", () => {
+    for (const scene of scenes) {
+      expect(toolById(scene.firstToolId)).toBeDefined();
+      expect(scene.sections.length).toBeGreaterThan(0);
+      for (const section of scene.sections) {
+        expect(section.toolIds.length).toBeGreaterThan(0);
+        for (const id of [...section.toolIds, ...(section.crossDomainToolIds ?? [])]) {
+          expect(toolById(id), `${scene.id}/${section.id} references ${id}`).toBeDefined();
+        }
+        expect(section.starterBuild.input).toBeTruthy();
+        expect(section.starterBuild.output).toBeTruthy();
+        expect(section.starterBuild.prototypeDirection).toBeTruthy();
+      }
+      for (const gap of scene.gaps) {
+        expect(gap.title).toBeTruthy();
+        expect(gap.description).toBeTruthy();
+      }
     }
   });
 });

@@ -20,6 +20,8 @@ export interface Scenario {
   ctaAnchor?: string;
   /** External URL — mutually exclusive with ctaRoute/ctaAnchor. */
   ctaHref?: string;
+  /** Slug of a catalog scene — when set, nav surfaces link to the /sports/<slug> zone. */
+  sceneSlug?: string;
 }
 
 export const scenarios: Scenario[] = [
@@ -49,7 +51,8 @@ export const scenarios: Scenario[] = [
       { categoryId: "open-source-projects", toolIds: ["hyrox-gym-finder", "athlete-load-monitor"] },
       { categoryId: "ai-models-components", toolIds: ["acute-chronic-workload-ratio"] },
     ],
-    ctaLabel: "View HYROX Gym Finder",
-    ctaHref: "https://github.com/moose-lab/hyrox-gym-finder",
+    ctaLabel: "Open the HYROX Zone",
+    ctaRoute: "/sports/hyrox",
+    sceneSlug: "hyrox",
   },
 ];

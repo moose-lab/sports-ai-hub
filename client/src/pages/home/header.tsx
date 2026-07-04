@@ -8,10 +8,10 @@
 import * as React from "react";
 import { useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Radio, Star, Trophy } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 import { TodayBar } from "@/components/worldcup/wc-primitives";
-import { catalog, toolsByCategory } from "@/lib/catalog";
+import { catalog, sceneBySlug, toolsByCategory } from "@/lib/catalog";
 import type { WcFixture } from "@/lib/worldcup";
 import { asset, REPO, ticker, type TickerKind } from "@/pages/home-data";
 import { categoryIcon } from "@/pages/home/category-icons";
@@ -96,6 +96,7 @@ function MenuColumnLabel({ children }: { children: React.ReactNode }) {
 
 function ExploreMenu({ onNav, onJumpCategory }: { onNav: (id: string) => void; onJumpCategory: (categoryId: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [, navigate] = useLocation();
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openMenu = () => {
@@ -174,10 +175,21 @@ function ExploreMenu({ onNav, onJumpCategory }: { onNav: (id: string) => void; o
             <MenuColumnLabel>By sport scenario</MenuColumnLabel>
             {scenarios.map((s) => {
               const Icon = s.icon;
+              // Scenarios with a live catalog scene route to their zone page;
+              // the rest scroll to the on-page spotlight.
+              const zone = s.sceneSlug ? sceneBySlug(s.sceneSlug) : undefined;
               return (
-                <MenuRow key={s.id} onClick={() => go("scenarios")}>
+                <MenuRow
+                  key={s.id}
+                  onClick={() => {
+                    setOpen(false);
+                    if (zone) navigate(zone.route);
+                    else onNav("scenarios");
+                  }}
+                >
                   <Icon size={15} style={{ color: "var(--amber-alert)", flex: "none" }} />
-                  <span style={{ fontSize: 13.5, color: "var(--fg-1)" }}>{s.title}</span>
+                  <span style={{ fontSize: 13.5, color: "var(--fg-1)", flex: 1 }}>{s.title}</span>
+                  {zone && <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, color: "var(--signal-green)" }}>ZONE</span>}
                 </MenuRow>
               );
             })}

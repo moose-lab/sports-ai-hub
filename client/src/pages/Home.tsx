@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <div style={{ background: "var(--canvas)", minHeight: "100vh" }}>
       <Header onNav={onNav} onJumpCategory={jumpToCategory} todayMatches={wc.data?.today ?? []} />
-      <Hero query={query} setQuery={setQuery} onNav={onNav} />
+      <Hero query={query} setQuery={setQuery} />
       <QuickStart onPick={jumpToCategory} />
       {scenarioBands.map((band) => (
         <ScenarioBand key={band.id} band={band} />
