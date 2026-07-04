@@ -1,10 +1,9 @@
 /**
- * Full-bleed "featured season" bands — one per Popular Scenario, sitting
- * between Quick Start and the Popular Scenarios spotlight. World Cup's copy
- * (48 teams / 104 matches / 3 host nations) is copied from the design
- * handoff verbatim; HYROX's facts (8 stations, 8km running, one global
- * format) are the real, publicly documented HYROX race parameters, sourced
- * the same way — not invented to match the pattern.
+ * Full-bleed "featured season" bands — sitting between Quick Start and the
+ * Popular Scenarios spotlight. World Cup's copy (48 teams / 104 matches /
+ * 3 host nations) is copied from the design handoff verbatim. HYROX's
+ * featured band graduated into its own component when the zone page
+ * shipped — see `hyrox-zone-band.tsx`, rendered right after these.
  */
 import { asset } from "@/pages/home-data";
 
@@ -41,23 +40,5 @@ export const scenarioBands: ScenarioBand[] = [
     ctaLabel: "Run the live commentator",
     ctaHref: "https://github.com/moose-lab/awesome-sports-ai/tree/main/prototypes/llm-match-commentator",
     backgroundImage: asset("hero-bg.webp"),
-  },
-  {
-    id: "hyrox-band",
-    eyebrow: "Featured · Functional Fitness",
-    titleLines: ["Build for", "HYROX race day."],
-    description:
-      "8 stations. 8 kilometers of running. One global format — the same course from your local club to the World Championship. Start with gym discovery, training load, and movement analysis.",
-    stats: [
-      { value: "8", label: "Stations" },
-      { value: "8km", label: "Running" },
-      { value: "1", label: "Global Format" },
-    ],
-    toolkitLabel: "HYROX toolkit to start with",
-    toolIds: ["hyrox-gym-finder", "athlete-load-monitor", "acute-chronic-workload-ratio", "coroebus", "openpose"],
-    ctaLabel: "Try HYROX Gym Finder",
-    ctaHref: "https://moose-lab.github.io/hyrox-gym-finder/",
-    secondaryCtaLabel: "Open the HYROX Zone",
-    secondaryCtaRoute: "/sports/hyrox",
   },
 ];

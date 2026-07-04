@@ -1,10 +1,11 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Router as WouterRouter, Switch } from "wouter";
+import { Redirect, Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import HyroxZone from "./pages/HyroxZone";
 import MatchCenter from "./pages/MatchCenter";
 import SportScene from "./pages/SportScene";
 
@@ -18,7 +19,13 @@ function Router() {
       <Switch>
         <Route path={"/"} component={Home} />
         <Route path={"/match-center"} component={MatchCenter} />
-        <Route path={"/sports/:slug"} component={SportScene} />
+        <Route path={"/hyrox"} component={HyroxZone} />
+        {/* HYROX has a bespoke zone page; the upstream catalog's scene.route
+            (/sports/hyrox) and every link built from it land there too. Other
+            slugs keep the generic data-driven scene page. */}
+        <Route path={"/sports/:slug"}>
+          {(params) => (params.slug === "hyrox" ? <Redirect to="/hyrox" /> : <SportScene params={params} />)}
+        </Route>
         <Route path={"/404"} component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

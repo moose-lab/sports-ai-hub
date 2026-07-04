@@ -21,7 +21,7 @@ export function computeAnchorScrollTop({
   return Math.max(0, rectTop + scrollY - offset);
 }
 
-export function scrollAnchorIntoView(id: string) {
+export function scrollAnchorIntoView(id: string, offset: number = STICKY_ANCHOR_OFFSET_PX) {
   const el = document.getElementById(id);
   if (!el) return;
 
@@ -29,6 +29,7 @@ export function scrollAnchorIntoView(id: string) {
     top: computeAnchorScrollTop({
       rectTop: el.getBoundingClientRect().top,
       scrollY: window.scrollY,
+      offset,
     }),
     behavior: "smooth",
   });

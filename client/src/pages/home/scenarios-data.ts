@@ -52,7 +52,7 @@ export const scenarios: Scenario[] = [
       { categoryId: "ai-models-components", toolIds: ["acute-chronic-workload-ratio"] },
     ],
     ctaLabel: "Open the HYROX Zone",
-    ctaRoute: "/sports/hyrox",
+    ctaRoute: "/hyrox",
     sceneSlug: "hyrox",
   },
 ];

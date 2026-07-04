@@ -10,42 +10,16 @@ import { useRef, useState } from "react";
 import { ChevronDown, ChevronUp, Radio, Star, Trophy } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
+import { LiveTicker } from "@/components/live-ticker";
 import { TodayBar } from "@/components/worldcup/wc-primitives";
 import { catalog, sceneBySlug, toolsByCategory } from "@/lib/catalog";
 import type { WcFixture } from "@/lib/worldcup";
-import { asset, REPO, ticker, type TickerKind } from "@/pages/home-data";
+import { asset, REPO, ticker } from "@/pages/home-data";
 import { categoryIcon } from "@/pages/home/category-icons";
 import { scenarios } from "@/pages/home/scenarios-data";
 import { PrimaryLink, Wordmark } from "@/pages/home/shared";
 
 const LOGO = asset("logo-icon.webp");
-
-const TICKER_COLOR: Record<TickerKind, string> = {
-  score: "var(--signal-green)",
-  tool: "var(--signal-green)",
-  news: "var(--amber-alert)",
-  event: "var(--fg-1)",
-};
-
-function TickerRow({ keyPrefix }: { keyPrefix: string }) {
-  return (
-    <>
-      {ticker.map((it, i) => (
-        <span key={keyPrefix + i} style={{ display: "inline-flex", alignItems: "center" }}>
-          <span style={{ color: "var(--fg-4)", margin: "0 18px" }}>◆</span>
-          <span
-            style={{
-              color: TICKER_COLOR[it.kind],
-              fontWeight: it.kind === "news" || it.kind === "score" ? 600 : 500,
-            }}
-          >
-            {it.text}
-          </span>
-        </span>
-      ))}
-    </>
-  );
-}
 
 /* ── Explore mega-menu row ───────────────────────────────────────────────── */
 function MenuRow({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
@@ -261,6 +235,21 @@ export function Header({
           </a>
 
           <nav style={{ display: "flex", alignItems: "center", gap: 22 }}>
+            <Link
+              href="/hyrox"
+              className="nav-link hidden md:inline-flex"
+              style={{
+                alignItems: "center",
+                gap: 6,
+                fontSize: 14,
+                color: "var(--signal-green)",
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+            >
+              <span className="pulse-dot" style={{ width: 6, height: 6 }} />
+              HYROX Zone
+            </Link>
             <span className="hidden md:inline-flex">
               <ExploreMenu onNav={onNav} onJumpCategory={onJumpCategory} />
             </span>
@@ -286,60 +275,14 @@ export function Header({
       </div>
 
       {/* LIVE ticker — broadcast lower-third (permanent product feed, unrelated to World Cup) */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "stretch",
-          height: 42,
-          background: "var(--canvas-terminal)",
-          borderBottom: "1px solid var(--green-a20)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "0 16px",
-            background: "var(--signal-green)",
-            color: "var(--canvas)",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 700,
-            fontSize: 12,
-            letterSpacing: "0.12em",
-            flex: "none",
-          }}
-        >
-          <span className="pulse-dot" style={{ width: 7, height: 7, background: "var(--canvas)" }} />
-          LIVE
-        </div>
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", alignItems: "center", position: "relative" }}>
-          <div
-            className="ticker-content"
-            style={{ fontFamily: "var(--font-mono)", fontSize: 12, whiteSpace: "nowrap", letterSpacing: "0.02em" }}
-          >
-            <TickerRow keyPrefix="a" />
-            <TickerRow keyPrefix="b" />
-          </div>
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: 60,
-              background: "linear-gradient(90deg, transparent, var(--canvas-terminal))",
-              pointerEvents: "none",
-            }}
-          />
-        </div>
-        <div
-          className="hidden min-[1100px]:flex"
-          style={{ alignItems: "center", gap: 6, padding: "0 14px", flex: "none", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--fg-3)" }}
-        >
-          <Radio size={13} style={{ color: "var(--signal-green)" }} /> auto-updating
-        </div>
-      </div>
+      <LiveTicker
+        items={ticker}
+        meta={
+          <>
+            <Radio size={13} style={{ color: "var(--signal-green)" }} /> auto-updating
+          </>
+        }
+      />
 
       {/* Amber "Today's matches" bar — the one World Cup element on the landing, unchanged */}
       <TodayBar variant="home" matches={todayMatches} />

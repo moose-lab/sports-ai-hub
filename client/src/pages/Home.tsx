@@ -10,8 +10,8 @@
  * Nothing about it is hand-typed here.
  *
  * Sections, top to bottom: sticky header + LIVE ticker (+ the existing,
- * untouched World Cup "Today's matches" bar), hero, Quick Start, a featured
- * band per Popular Scenario (World Cup, HYROX), Popular Scenarios, tool
+ * untouched World Cup "Today's matches" bar), hero, Quick Start, featured
+ * bands (World Cup, the HYROX Zone entry), Popular Scenarios, tool
  * directory, Builder's Path, runnable prototypes, contribute, footer — plus
  * a Tool Detail Modal any section can open.
  */
@@ -26,6 +26,7 @@ import { Directory } from "@/pages/home/directory";
 import { Footer } from "@/pages/home/footer";
 import { Header } from "@/pages/home/header";
 import { Hero } from "@/pages/home/hero";
+import { HyroxZoneBand } from "@/pages/home/hyrox-zone-band";
 import { Prototypes } from "@/pages/home/prototypes";
 import { QuickStart } from "@/pages/home/quick-start";
 import { ScenarioBand } from "@/pages/home/scenario-band";
@@ -54,6 +55,7 @@ export default function Home() {
       {scenarioBands.map((band) => (
         <ScenarioBand key={band.id} band={band} />
       ))}
+      <HyroxZoneBand />
       <ScenarioSpotlight onSelectTool={setSelectedToolId} onNav={onNav} />
       <Directory
         query={query}

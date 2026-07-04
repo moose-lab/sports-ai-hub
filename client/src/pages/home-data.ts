@@ -15,15 +15,12 @@ export const asset = (file: string): string =>
 
 export const REPO = "https://github.com/moose-lab/awesome-sports-ai";
 
-export type TickerKind = "score" | "tool" | "news" | "event";
-
-export interface TickerItem {
-  kind: TickerKind;
-  text: string;
-}
+export type { TickerItem, TickerKind } from "@/components/live-ticker";
+import type { TickerItem } from "@/components/live-ticker";
 
 // LIVE broadcast ticker — typed feed items (news vs tool vs event)
 export const ticker: TickerItem[] = [
+  { kind: "tool", text: "NEW ZONE · HYROX — 16 tools · Season 9 calendar · builder paths" },
   { kind: "score", text: "FIFA WORLD CUP 2026 · USA / CAN / MEX · 48 teams · 104 matches" },
   { kind: "tool", text: "TRENDING TOOL · statsbombpy — free StatsBomb event data into Python" },
   { kind: "news", text: "NBA FINALS 2026 · Knicks def. Spurs 4-1 · first title in 53 years" },

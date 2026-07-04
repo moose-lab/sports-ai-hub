@@ -50,7 +50,7 @@ export function Hero({ query, setQuery }: { query: string; setQuery: (v: string)
             <Link href="/match-center" style={pillStyle}>
               <Trophy size={13} /> World Cup 2026 <ArrowRight size={13} /> Match Center
             </Link>
-            <Link href="/sports/hyrox" style={pillStyle}>
+            <Link href="/hyrox" style={pillStyle}>
               <Dumbbell size={13} /> HYROX <ArrowRight size={13} /> HYROX Zone
             </Link>
           </div>
