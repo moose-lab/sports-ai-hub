@@ -1,6 +1,6 @@
 /**
- * HYROX Zone — footer: back-to-hub, repo, official HYROX, and the
- * not-affiliated disclaimer.
+ * HYROX Zone — footer: back-to-hub, zone blueprint, repo, official HYROX,
+ * and the not-affiliated disclaimer.
  */
 import { Link } from "wouter";
 
@@ -35,6 +35,14 @@ export function ZoneFooter() {
           <Link href="/" className="nav-link" style={{ color: "var(--fg-3)", textDecoration: "none" }}>
             Back to the Hub
           </Link>
+          {/* Static page in client/public — plain <a> so it does a full load, not SPA nav. */}
+          <a
+            href={`${import.meta.env.BASE_URL}hyrox/blueprint/`}
+            className="nav-link"
+            style={{ color: "var(--fg-3)", textDecoration: "none" }}
+          >
+            Zone Blueprint
+          </a>
           {(
             [
               ["GitHub", REPO],
