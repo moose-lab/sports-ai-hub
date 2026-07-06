@@ -3,6 +3,7 @@ import {
   hyroxAudiences,
   hyroxCalendar,
   hyroxCategories,
+  hyroxZonePicks,
   hyroxPersonas,
   type HyroxCategory,
 } from "@/data/hyrox-zone";
@@ -59,9 +60,25 @@ describe("hyrox zone directory filtering", () => {
 });
 
 describe("hyrox zone shipped content", () => {
-  it("ships the 16-tool × 4-scenario collection the zone copy promises", () => {
+  it("ships the 17-tool × 4-scenario collection the zone copy promises", () => {
     expect(hyroxCategories).toHaveLength(4);
-    expect(hyroxCategories.flatMap((c) => c.tools)).toHaveLength(16);
+    expect(hyroxCategories.flatMap((c) => c.tools)).toHaveLength(17);
+  });
+
+  it("surfaces the HYROX Training Plan Skill for coding-agent plan generation", () => {
+    const tools = hyroxCategories.flatMap((c) => c.tools);
+    const tool = tools.find((item) => item.name === "HYROX Training Plan Skill");
+    const category = hyroxCategories.find((item) =>
+      item.tools.some((candidate) => candidate.name === "HYROX Training Plan Skill"),
+    );
+
+    expect(tool).toBeDefined();
+    expect(category?.id).toBe("hyrox-movement");
+    expect(tool?.aud).toBe("Coaches");
+    expect(tool?.url).toBe("https://github.com/moose-lab/hyrox-training-plan-skill");
+    expect(matchesHyroxTool(tool!, "Coaches", "coding agents")).toBe(true);
+    expect(matchesHyroxTool(tool!, "Coaches", "training plan")).toBe(true);
+    expect(hyroxZonePicks).toContain("Training Plan Skill");
   });
 
   it("covers every persona with at least one tool and one filter pill", () => {
