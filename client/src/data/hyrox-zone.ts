@@ -161,6 +161,12 @@ export const hyroxCategories: HyroxCategory[] = [
         url: "https://github.com/SaxionAMI/AthleteLoadMonitor",
       },
       {
+        name: "HYROX Training Plan Skill",
+        desc: "Generates science-based training plans for coding agents with periodization references and validation scripts.",
+        aud: "Coaches",
+        url: "https://github.com/moose-lab/hyrox-training-plan-skill",
+      },
+      {
         name: "Roboflow Sports",
         desc: "CV detection and tracking workflows — adaptable to rep counting and station zones.",
         aud: "Builders",
@@ -253,14 +259,15 @@ export const hyroxSeasonCaption = "Season 9 · 51 events · 174 race days · ful
 
 /** The zone's LIVE ticker — same broadcast lower-third as Home, HYROX feed. */
 export const hyroxTicker: TickerItem[] = [
-  { kind: "score", text: "16 HYROX TOOLS CURATED · 4 SCENARIOS · 0 OFFICIAL APIS" },
+  { kind: "score", text: "17 HYROX TOOLS CURATED · 4 SCENARIOS · 0 OFFICIAL APIS" },
   { kind: "tool", text: "TRENDING TOOL · pyrox-client — HYROX results into DataFrames" },
   { kind: "tool", text: "NEW · hyrox-race-insights — terminal race analytics + HR spikes" },
   { kind: "news", text: "DATA DROP · New Delhi results land Jul 26 · results.hyrox.com" },
+  { kind: "tool", text: "NEW · HYROX Training Plan Skill — coding-agent programming guardrails" },
   { kind: "tool", text: "FOR COACHES · MMPose — wall-ball depth from a phone video" },
   { kind: "event", text: "WANTED · race-split-analyzer — claim it as a mono-tool" },
   { kind: "tool", text: "FOR CREATORS · Whisper + ffmpeg-python — recap-to-clips pipeline" },
 ];
 
 /** Home featured band — "In the zone" tag picks. */
-export const hyroxZonePicks = ["pyrox-client", "hyrox-race-insights", "HYRESULT", "MMPose", "Whisper"];
+export const hyroxZonePicks = ["pyrox-client", "hyrox-race-insights", "Training Plan Skill", "HYRESULT", "MMPose"];

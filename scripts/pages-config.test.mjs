@@ -3,6 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+const clientIndex = readFileSync(new URL("../client/index.html", import.meta.url), "utf8");
+const viteConfig = readFileSync(new URL("../vite.config.ts", import.meta.url), "utf8");
 const workflowPath = new URL("../.github/workflows/deploy-cloudflare-pages.yml", import.meta.url);
 const cloudflareConfig = readFileSync(
   new URL("../vite.config.cloudflare.ts", import.meta.url),
@@ -30,4 +32,16 @@ test("Cloudflare Pages deployment uses the canonical project URL and root asset 
   assert.doesNotMatch(workflow, /actions\/configure-pages/);
   assert.doesNotMatch(workflow, /actions\/deploy-pages/);
   assert.match(workflow, /url:\s*https:\/\/sports-ai-hub\.pages\.dev\//);
+});
+
+test("local browser preview does not request unresolved analytics or debug collector assets", () => {
+  assert.doesNotMatch(clientIndex, /src="%VITE_ANALYTICS_ENDPOINT%\/umami"/);
+  assert.doesNotMatch(clientIndex, /%VITE_ANALYTICS_/);
+  assert.match(clientIndex, /import\.meta\.env\.VITE_ANALYTICS_ENDPOINT/);
+  assert.match(clientIndex, /import\.meta\.env\.VITE_ANALYTICS_WEBSITE_ID/);
+  assert.match(clientIndex, /rel="icon"/);
+  assert.match(clientIndex, /\/assets\/logo-icon\.webp/);
+
+  assert.match(viteConfig, /\/__manus__\/debug-collector\.js/);
+  assert.match(viteConfig, /Content-Type": "application\/javascript"/);
 });
