@@ -30,6 +30,8 @@ import { useWorldCup } from "@/hooks/useWorldCup";
 import { hottestFixture, type WcFixture, type WcStatus, type WorldCup } from "@/lib/worldcup";
 import { TodayBar } from "@/components/worldcup/wc-primitives";
 import { MatchCard, Milestones, Scoreboard, Standings } from "@/components/worldcup/wc-match";
+import { WorldCupToolkit } from "@/components/worldcup/wc-toolkit";
+import { ToolDetailModal } from "@/pages/home/tool-detail-modal";
 
 const LOGO = asset("logo-icon.webp");
 const HERO_BG = asset("hero-bg.webp");
@@ -183,6 +185,7 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
   const defaultFixture = hottestFixture(data) ?? fixtures[0];
   const [selId, setSelId] = useState(defaultFixture?.id);
   const [filter, setFilter] = useState("All");
+  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
   const selected = fixtures.find((m) => m.id === selId) ?? defaultFixture;
 
@@ -323,6 +326,8 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
         </div>
       </section>
 
+      <WorldCupToolkit lanes={data.toolkit} onSelectTool={setSelectedToolId} />
+
       {/* Fixtures */}
       <section id="today" className="sa-anchor" style={{ borderBottom: "1px solid var(--border)" }}>
         <div className="sa-container" style={{ paddingTop: 48, paddingBottom: 64 }}>
@@ -425,6 +430,7 @@ function Content({ data, lastUpdatedAt, isLive }: { data: WorldCup; lastUpdatedA
           </div>
         </div>
       </section>
+      <ToolDetailModal toolId={selectedToolId} onClose={() => setSelectedToolId(null)} />
     </>
   );
 }

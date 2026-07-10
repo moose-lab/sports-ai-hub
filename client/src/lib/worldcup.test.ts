@@ -76,6 +76,25 @@ const SAMPLE = {
   generatedDate: "2026-06-25",
   fifaWorldCup: {
     title: "FIFA World Cup 2026",
+    toolkit: [
+      {
+        slug: "video-and-vision",
+        title: "Video and Vision Review",
+        matchdayUse: "Support coaching review and user-owned match video annotation.",
+        tools: [
+          {
+            name: "Roboflow Sports",
+            href: "https://github.com/roboflow/sports",
+            role: "Provides sports computer-vision examples for detection, tracking, and analysis.",
+          },
+        ],
+      },
+      {
+        slug: "broken-lane",
+        title: "",
+        tools: [{ name: "Missing metadata" }],
+      },
+    ],
     confirmedFixtures: [
       { date: "Jun 11", match: "Mexico v South Africa", group: "Group A", venue: "Mexico City Stadium", tag: "Opener", status: "Final", score: "MEX 2 - RSA 0", insight: "Opening win" },
       { date: "Jun 11", match: "Canada v Croatia", group: "Group A", venue: "Toronto Stadium", tag: "Group", status: "Final", score: "CAN 1 - CRO 1", insight: "" },
@@ -124,6 +143,20 @@ describe("parseWorldCup", () => {
   it("surfaces the feature day via generatedDate", () => {
     expect(wc.todayLabel).toBe("Jun 25");
     expect(wc.today.map((f) => f.home.code)).toEqual(["GER"]);
+  });
+
+  it("keeps valid football tool lanes and places Roboflow Sports in video review", () => {
+    expect(wc.toolkit).toHaveLength(1);
+    expect(wc.toolkit[0]).toMatchObject({
+      slug: "video-and-vision",
+      title: "Video and Vision Review",
+      tools: [
+        {
+          name: "Roboflow Sports",
+          href: "https://github.com/roboflow/sports",
+        },
+      ],
+    });
   });
 
   it("keeps cross-day live knockout matches in the homepage carousel", () => {
