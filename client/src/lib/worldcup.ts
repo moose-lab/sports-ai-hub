@@ -87,6 +87,19 @@ export interface WcLink {
   url: string;
 }
 
+export interface WcToolkitTool {
+  name: string;
+  href: string;
+  role: string;
+}
+
+export interface WcToolkitLane {
+  slug: string;
+  title: string;
+  matchdayUse: string;
+  tools: WcToolkitTool[];
+}
+
 export interface WorldCup {
   title: string;
   subtitle: string;
@@ -100,6 +113,7 @@ export interface WorldCup {
   today: WcFixture[]; // live-first match window that drives the homepage carousel
   standings: WcStandingGroup[];
   milestones: WcMilestone[];
+  toolkit: WcToolkitLane[];
 }
 
 /* ── Helpers ─────────────────────────────────────────────────── */
@@ -215,6 +229,32 @@ function uniqueFixtures(pools: WcFixture[][]): WcFixture[] {
   return out;
 }
 
+function parseToolkit(raw: unknown): WcToolkitLane[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.flatMap((lane): WcToolkitLane[] => {
+    if (!lane || typeof lane !== "object") return [];
+    const candidate = lane as Record<string, unknown>;
+    const slug = typeof candidate.slug === "string" ? candidate.slug.trim() : "";
+    const title = typeof candidate.title === "string" ? candidate.title.trim() : "";
+    const matchdayUse =
+      typeof candidate.matchdayUse === "string" ? candidate.matchdayUse.trim() : "";
+    const rawTools = Array.isArray(candidate.tools) ? candidate.tools : [];
+    const tools = rawTools.flatMap((entry): WcToolkitTool[] => {
+      if (!entry || typeof entry !== "object") return [];
+      const tool = entry as Record<string, unknown>;
+      const name = typeof tool.name === "string" ? tool.name.trim() : "";
+      const href = typeof tool.href === "string" ? tool.href.trim() : "";
+      const role = typeof tool.role === "string" ? tool.role.trim() : "";
+      return name && href && role ? [{ name, href, role }] : [];
+    });
+
+    return slug && title && matchdayUse && tools.length > 0
+      ? [{ slug, title, matchdayUse, tools }]
+      : [];
+  });
+}
+
 /** Parse the raw `source-data.json` object into the typed World Cup model. */
 export function parseWorldCup(root: any): WorldCup {
   const fifa = root?.fifaWorldCup ?? {};
@@ -316,6 +356,7 @@ export function parseWorldCup(root: any): WorldCup {
     today,
     standings: computeStandings(fixtures),
     milestones: Array.isArray(fifa.milestones) ? fifa.milestones : [],
+    toolkit: parseToolkit(fifa.toolkit),
   };
 }
 
