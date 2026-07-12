@@ -1,7 +1,8 @@
 /**
- * HYROX Zone — hero: "The HYROX toolbox." + persona entry cards.
- * Each persona card is a button: click sets the directory's audience
- * filter and scrolls to #tools. Tool counts are derived from the data.
+ * HYROX Zone — hero, film first: the official race-format film full-width
+ * under the ticker, then "The HYROX toolbox." copy and the persona entry
+ * cards below it. Each persona card is a button: click sets the directory's
+ * audience filter and scrolls to #tools. All counts are derived from the data.
  */
 import { Clapperboard, ClipboardList, Code, Timer, type LucideIcon } from "lucide-react";
 
@@ -9,6 +10,7 @@ import { PhaseBadge } from "@/components/brand";
 import { Card } from "@/components/ui/card";
 import { hyroxCategories, hyroxPersonas, type HyroxAudience, type HyroxPersona } from "@/data/hyrox-zone";
 import { toolCountForAudience } from "@/lib/hyrox-zone";
+import { ZoneHeroFilm } from "@/pages/hyrox/hero-film";
 
 const PERSONA_ICON: Record<HyroxAudience, LucideIcon> = {
   Builders: Code,
@@ -50,14 +52,18 @@ function PersonaCard({ persona, onClick }: { persona: HyroxPersona; onClick: () 
 export function ZoneHero({ onPersona }: { onPersona: (aud: HyroxAudience) => void }) {
   return (
     <section id="top" style={{ borderBottom: "1px solid var(--border)" }}>
-      <div className="sa-container" style={{ paddingTop: 64, paddingBottom: 56 }}>
+      {/* The film — first thing on screen, nothing on or around it. */}
+      <ZoneHeroFilm />
+
+      {/* Copy below the film. */}
+      <div className="sa-container" style={{ paddingTop: 48, paddingBottom: 56 }}>
         <div style={{ maxWidth: 780 }}>
           <div style={{ display: "flex", gap: 10, marginBottom: 22, flexWrap: "wrap" }}>
             <PhaseBadge status="active" live>
               Sport Zone · 01
             </PhaseBadge>
             <PhaseBadge status="upcoming">
-              {totalTools} tools · {hyroxCategories.length} scenarios
+              {totalTools} tools · {hyroxCategories.length} categories
             </PhaseBadge>
           </div>
           <h1
@@ -73,10 +79,10 @@ export function ZoneHero({ onPersona }: { onPersona: (aud: HyroxAudience) => voi
           >
             The HYROX <span style={{ color: "var(--signal-green)" }}>toolbox.</span>
           </h1>
-          <p style={{ fontSize: 18, lineHeight: 1.6, color: "var(--fg-2)", maxWidth: 620, margin: 0 }}>
-            The directory, converged on one scenario. Every entry is a real, reachable tool for improving HYROX
-            performance — getting the data out, finding the weak station, fixing the movement, telling the story.
-            Pick who you are and start filtering.
+          <p style={{ fontSize: 17.5, lineHeight: 1.6, color: "var(--fg-2)", maxWidth: 620, margin: 0 }}>
+            That's the race — 1 km run, one workout station, ×8, identical in every city. Everything below is a
+            real, reachable tool, dataset, or model for improving HYROX performance. Pick who you are and start
+            filtering.
           </p>
         </div>
 
