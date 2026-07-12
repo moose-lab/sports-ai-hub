@@ -14,6 +14,7 @@ import { PrimaryLink, Wordmark } from "@/pages/home/shared";
 const LOGO = asset("logo-icon.webp");
 
 const NAV_LINKS: [string, string][] = [
+  ["The Race", "race"],
   ["Tools", "tools"],
   ["Builder Path", "builder"],
   ["Data Drops", "calendar"],
