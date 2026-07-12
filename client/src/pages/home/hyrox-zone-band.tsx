@@ -13,9 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { hyroxBuilderPaths, hyroxCategories, hyroxZonePicks } from "@/data/hyrox-zone";
 
+const totalTools = hyroxCategories.flatMap((c) => c.tools).length;
+
 const stats: [string, string][] = [
-  [String(hyroxCategories.flatMap((c) => c.tools).length), "Tools curated"],
-  [String(hyroxCategories.length), "Scenarios"],
+  [String(totalTools), "Tools curated"],
+  [String(hyroxCategories.length), "Categories"],
   [String(hyroxBuilderPaths.length), "Builder paths"],
   ["0", "Official APIs"],
 ];
@@ -60,8 +62,9 @@ export function HyroxZoneBand() {
               is open.
             </h2>
             <p style={{ fontSize: 17, lineHeight: 1.6, color: "var(--fg-2)", margin: "0 0 22px", maxWidth: 540 }}>
-              The directory, converged on one race: 17 curated tools for getting HYROX results data, finding your weak
-              station, fixing the movement, and telling the story — for builders, athletes, coaches, and creators.
+              The directory, converged on one race: {totalTools} curated tools, datasets, and models for getting HYROX
+              results data, finding your weak station, fixing the movement, and telling the story — for builders,
+              athletes, coaches, and creators.
             </p>
             <div style={{ marginBottom: 24 }}>
               <div
