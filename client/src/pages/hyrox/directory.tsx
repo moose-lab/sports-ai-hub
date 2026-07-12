@@ -1,7 +1,8 @@
 /**
- * HYROX Zone — the tool directory: audience filter pills + live search
- * over the scenario-grouped collection. Audience state is lifted to the
- * page so the hero's persona cards can drive it.
+ * HYROX Zone — the tool directory: audience pills × type pills (tools /
+ * datasets / models, AND-combined) × live search over the collection,
+ * categorized exactly like awesome-sports-ai. Audience state is lifted to
+ * the page so the hero's persona cards can drive it.
  */
 import { useState } from "react";
 import { ArrowUpRight, LibraryBig, Search } from "lucide-react";
@@ -13,12 +14,15 @@ import { Input } from "@/components/ui/input";
 import {
   hyroxAudiences,
   hyroxCategories,
+  hyroxKinds,
   type HyroxAudience,
   type HyroxAudienceFilter,
+  type HyroxKindFilter,
   type HyroxTool,
 } from "@/data/hyrox-zone";
 import { countShownTools, filterHyroxCategories } from "@/lib/hyrox-zone";
 import { FilterPill } from "@/pages/hyrox/filter-pill";
+import { KindTag } from "@/pages/hyrox/kind-tag";
 
 /** Builders/Athletes read as "signal" (green); Coaches/Creators as slate. */
 const AUD_BADGE: Record<HyroxAudience, "signal" | "slate"> = {
@@ -59,8 +63,9 @@ function ToolCard({ tool }: { tool: HyroxTool }) {
           />
         </div>
         <p style={{ fontSize: 13.5, lineHeight: 1.5, color: "var(--fg-2)", margin: "0 0 12px" }}>{tool.desc}</p>
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Badge variant={AUD_BADGE[tool.aud]}>{tool.aud}</Badge>
+          <KindTag kind={tool.kind} />
         </div>
       </Card>
     </a>
@@ -75,8 +80,9 @@ export function ZoneDirectory({
   setAud: (aud: HyroxAudienceFilter) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [kind, setKind] = useState<HyroxKindFilter>("All types");
 
-  const cats = filterHyroxCategories(hyroxCategories, aud, query);
+  const cats = filterHyroxCategories(hyroxCategories, aud, query, kind);
   const total = countShownTools(cats);
 
   return (
@@ -86,12 +92,16 @@ export function ZoneDirectory({
           eyebrow="The HYROX Collection"
           icon={LibraryBig}
           title="Tools that move your race time"
-          sub="Grouped by scenario — race data, pacing analytics, training & movement, content — and filterable by who you are. Every entry links to the source."
+          sub="Categorized exactly like the awesome-sports-ai directory — data & APIs, analytics, training, media, dev tools, datasets & research — with datasets and models tagged inside every category. Every entry links to the source."
         />
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, margin: "28px 0 36px" }}>
           {hyroxAudiences.map((a) => (
             <FilterPill key={a} label={a} active={a === aud} onClick={() => setAud(a)} />
+          ))}
+          <span aria-hidden style={{ width: 1, height: 22, background: "var(--border)", margin: "0 4px" }} />
+          {hyroxKinds.map((k) => (
+            <FilterPill key={k} label={k} variant="kind" active={k === kind} onClick={() => setKind(k)} />
           ))}
           <div style={{ position: "relative", marginLeft: "auto", minWidth: 240 }}>
             <Search
@@ -121,7 +131,9 @@ export function ZoneDirectory({
               fontSize: 14,
             }}
           >
-            No tools match “{query}”. Try a broader term.
+            {query
+              ? `No tools match “${query}”. Try a broader term.`
+              : "Nothing here for this audience × type combination. Clear a filter."}
           </div>
         )}
 
